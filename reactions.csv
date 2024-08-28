@@ -1,0 +1,8 @@
+Rx,TS,Gdir,Ginv
+A_0L = B_0L,-,,
+B_0L = C_0L,TS1_0L,,
+C_0L = A_0L,-,,
+B_0L + T = D_1L,-,,
+D_1L = E_1L,TS1_1L,,
+E_1L = F_1L + prod,-,,
+F_1L = D_1L,-,,
