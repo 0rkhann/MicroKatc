@@ -51,7 +51,7 @@ pip install -r requirements.txt
 > **_NOTE:_**  It is advisable to do it in the virtual environment as some packages are compatible only with older verisons of numpy and pandas
 
 ### Run
-1. Place all computed .out files into the folder with the MesoKinetix files
+1. Place all computed .out files into the GaussOutputFiles folder
 2. Create a reactions.csv file with all reactions in the cycle (refer to the example provided)
 3. Define an environment variable *thermochange* pointing at the route where **thermochange** is installed:
    ```bash
