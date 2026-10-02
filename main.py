@@ -23,18 +23,26 @@ def main():
         start=temperature_value - 25, stop=temperature_value + 25, num=5, endpoint=True
     )
 
-    # Creating an array of concentrations of a reactant (lg scale)
+    # Concentrations of the studied reactant (log scale): every half decade from 1e-10 to 0.1 M, as in the paper
     left_border_concentration = -10
-    right_border_concentration = 0
+    right_border_concentration = -1
     reactant_concentration_array = np.logspace(
         start=left_border_concentration,
         stop=right_border_concentration,
-        num=9,
+        num=19,
         endpoint=True,
     )
 
-    # Specify initial concentrations for reactants, products, and a catalyst (case for Ea analysis requires for very small concentration of a catalyst)
-    c0_1 = {"CO": 1, "H2": 1, "ete": 1, "prod": 0, "I1_0L": 0.000001, "PMe3": 0.0000005}
+    # Initial concentrations (M) for the apparent Ea and DRC analyses: a very low catalyst
+    # concentration, as in the paper (ACS Catal. 2025, 15, 4739)
+    c0_1 = {
+        "CO": 0.05,
+        "H2": 0.05,
+        "ete": 0.05,
+        "prod": 0,
+        "I1_0L": 1e-6,
+        "PMe3": 0.0000005,
+    }
 
     # Specify a reactant to study
     reactant_to_study = "PMe3"
@@ -140,8 +148,8 @@ def main():
         log_x=True,
     )
 
-    # You can set now higher concentration of catalyst if needed
-    c0_2 = {"CO": 0.1, "H2": 0.1, "ete": 0.1, "prod": 0, "I1_0L": 0.000005, "PMe3": 1}
+    # Initial concentrations (M) for the catalyst distribution and conversion time, as in the paper
+    c0_2 = {"CO": 0.05, "H2": 0.05, "ete": 0.05, "prod": 0, "I1_0L": 5e-4, "PMe3": 1}
 
     # Specify cycle names
     cycles = ["0L", "1L"]
@@ -181,7 +189,7 @@ def main():
     # Adjust nrows and ncols to your case
     analysis3.plot_catalyst_concentration_vs_reactant(log_x=True, figsize=(15, 10))
     analysis3.plot_concentration_evolution(
-        temperatures, log_y=True, log_x=True, nrows=3, ncols=3, figsize=(15, 15)
+        temperatures, log_y=True, log_x=True, nrows=4, ncols=5, figsize=(20, 16)
     )
     analysis3.plot_reactant_vs_product_conversion(log_x=True, figsize=(15, 10))
 
