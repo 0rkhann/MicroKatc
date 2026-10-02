@@ -1,31 +1,40 @@
-"""Builds the README figures in pics/ from the results that main.py saves.
+"""Builds the README figures in pics/ from the results of the hydroformylation example.
 
 Each figure is sized for GitHub's README column (about 840 px wide) and shares one
 style: colour identifies the catalytic cycle (0L blue, 1L pink, as in the paper's TOC
 graphic) and the product is green with a dashed line and triangles. main.py's own
 figures, with every step and every concentration, stay in microkinetics_simulations_images/.
 
-Run after main.py, from the same directory:
+Run after the example (python main.py, or python microkatc.py run examples/hydroformylation/study.yaml):
     python readme_figures.py
 """
 
 import glob
 import os
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 from auxiliary_functions import AuxiliaryFunctions
+from microkatc import initial_concentrations
 from microkinetics_simulation import SIMULATIONS_OUTPUT_DIR_NAME, SimulationHandler
+from study import load_study
 
-REACTANT = "PMe3"
-T = 350.0
-# Same as c0_1 / c0_2 and the simulation times in main.py, so the cached simulations are reused
-C0_EA = {"CO": 0.05, "H2": 0.05, "ete": 0.05, "prod": 0, "I1_0L": 1e-6}
-C0_MK = {"CO": 0.05, "H2": 0.05, "ete": 0.05, "prod": 0, "I1_0L": 5e-4}
-EA_SIMULATION_TIME, EA_TIME_H = 10_000, 2
-MK_SIMULATION_TIME, CATALYST_TIME_H, CONVERSION = 100_000, 1, 0.99
+REPO = Path(__file__).resolve().parent
+# Every condition comes from the example study, so the cached simulations of its run are reused
+STUDY = load_study(
+    REPO / "examples" / "hydroformylation" / "study.yaml", check_energy_sources=False
+)
+REACTANT, T, PRODUCT_NAME = STUDY.studied_species, STUDY.temperature_K, STUDY.product
+EA, MK = STUDY.activation_energy, STUDY.microkinetics
+EA_SIMULATION_TIME, EA_TIME_H = EA.simulation_time_s, EA.sampling_time_h
+MK_SIMULATION_TIME, CATALYST_TIME_H, CONVERSION = (
+    MK.simulation_time_s,
+    MK.catalyst_snapshot_h,
+    MK.conversion,
+)
 
 CYCLE_0L, CYCLE_1L, PRODUCT, INK, MUTED = (
     "#2a78d6",
@@ -88,7 +97,7 @@ def latest(kind):
 
 
 def save(fig, name):
-    fig.savefig(os.path.join("pics", name), dpi=170, bbox_inches="tight")
+    fig.savefig(REPO / "pics" / name, dpi=170, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved pics/{name}")
 
@@ -99,6 +108,7 @@ def log_x(ax):
 
 
 def main():
+    os.chdir(STUDY.results_dir)
     flux, rate, drc = latest("flux"), latest("rate"), latest("drc")
     flux["reaction"] = flux["reaction"].str.split().str.join(" ")
     drc = drc.rename(columns=lambda c: " ".join(c.split())).sort_values(
@@ -188,10 +198,16 @@ def main():
 
     # 4-6. Catalyst distribution, concentration profiles and conversion time (main.py's c0_2)
     mk = SimulationHandler(
-        T, AuxiliaryFunctions.compute_pressure_value(T), REACTANT, MK_SIMULATION_TIME
+        T,
+        AuxiliaryFunctions.compute_pressure_value(T),
+        REACTANT,
+        MK_SIMULATION_TIME,
+        STUDY.output_step_s,
     )
-    sims = [mk.get_simulation_df({**C0_MK, REACTANT: c}) for c in c0]
-    cycles = AuxiliaryFunctions.find_intermediates_of_cycle(["0L", "1L"])
+    sims = [
+        mk.get_simulation_df(initial_concentrations(STUDY, MK.initial_M, c)) for c in c0
+    ]
+    cycles = {label: list(members) for label, members in STUDY.cycles.items()}
     catalyst = AuxiliaryFunctions.get_concentrations_of_catalyst(
         sims, CATALYST_TIME_H, cycles
     )
@@ -202,7 +218,7 @@ def main():
         catalyst, (CYCLE_0L, CYCLE_1L), ("0L cycle", "1L cycle")
     ):
         ax.plot(c0, 100 * np.array(share) / total, "o-", color=colour, label=label)
-    ax.set_ylabel(f"share of catalyst at t = {CATALYST_TIME_H} h (%)")
+    ax.set_ylabel(f"share of catalyst at t = {CATALYST_TIME_H:g} h (%)")
     ax.set_ylim(-3, 103)
     ax.set_title("Catalyst distribution between the cycles", color=INK)
     log_x(ax)
@@ -235,7 +251,15 @@ def main():
     save(fig, "concentration_profiles.png")
 
     times = AuxiliaryFunctions.compute_time_of_product_conversion_given_reactant_concentration(
-        sims, c0, REACTANT, CONVERSION * min(C0_MK[r] for r in ("CO", "H2", "ete"))
+        sims,
+        c0,
+        REACTANT,
+        [
+            CONVERSION
+            * STUDY.max_product_M(initial_concentrations(STUDY, MK.initial_M, c))
+            for c in c0
+        ],
+        PRODUCT_NAME,
     )
     fig, ax = plt.subplots(figsize=(8.5, 4.3))
     ax.plot(
@@ -253,10 +277,16 @@ def main():
 
     # 7. Poisoning intermediates at the Ea sampling time, against [PMe3] (main.py's c0_1)
     ea = SimulationHandler(
-        T, AuxiliaryFunctions.compute_pressure_value(T), REACTANT, EA_SIMULATION_TIME
+        T,
+        AuxiliaryFunctions.compute_pressure_value(T),
+        REACTANT,
+        EA_SIMULATION_TIME,
+        STUDY.output_step_s,
     )
     rows = [
-        ea.get_simulation_df({**C0_EA, REACTANT: c}).set_index("time").loc[EA_TIME_H]
+        ea.get_simulation_df(initial_concentrations(STUDY, EA.initial_M, c))
+        .set_index("time")
+        .loc[EA_TIME_H]
         for c in c0
     ]
     fig, ax = plt.subplots(figsize=(8.5, 4.6))
@@ -274,7 +304,7 @@ def main():
             label=species.replace("_", "-"),
         )
     ax.set(yscale="log", ylabel="concentration (M)")
-    ax.set_title(f"Poisoning intermediates at t = {EA_TIME_H} h", color=INK)
+    ax.set_title(f"Poisoning intermediates at t = {EA_TIME_H:g} h", color=INK)
     log_x(ax)
     ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5))
     save(fig, "poisoning_intermediates.png")

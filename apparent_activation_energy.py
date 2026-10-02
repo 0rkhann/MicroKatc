@@ -116,11 +116,11 @@ class ReactionDataHandler:
 
 
 def reaction_of_flux(flux_name, reactions):
-    """Returns the reactions.csv row of a COPASI flux column: copasi_helper names row i r{i+1:02d}"""
+    """Returns the step of a COPASI flux column: copasi_helper names step i r{i+1:02d}"""
     match = re.fullmatch(r"r(\d+)\.Flux", flux_name)
     if match is None or not 1 <= int(match.group(1)) <= len(reactions):
         raise ValueError(
-            f"Cannot match flux column {flux_name!r} to a row of reactions.csv"
+            f"Cannot match flux column {flux_name!r} to a step of the study"
         )
     return reactions[int(match.group(1)) - 1]
 
@@ -145,10 +145,10 @@ class ReactionParameterCalculator:
             else [key for key in df["name"].unique() if key.endswith(".Rate")]
         )
 
-        # Every reactions.csv row must have exactly one flux column
+        # Every step must have exactly one flux column
         if calculation_type == "ri" and len(keys) != len(reactions):
             raise ValueError(
-                f"COPASI returned {len(keys)} '.Flux' columns but reactions.csv has "
+                f"COPASI returned {len(keys)} '.Flux' columns but the study has "
                 f"{len(reactions)} reactions; cannot match fluxes to reactions"
             )
 
@@ -488,11 +488,11 @@ class DRCAnalysis:
                     axis=0,
                 )
 
-                # DRC coefficients are matched to reactions.csv rows by position
+                # DRC coefficients are matched to the steps by position (drc_calc follows step order)
                 if len(drc_coefficients) != len(self.reactions):
                     raise ValueError(
                         f"COPASI returned {len(drc_coefficients)} DRC coefficients but "
-                        f"reactions.csv has {len(self.reactions)} reactions; cannot match them"
+                        f"the study has {len(self.reactions)} steps; cannot match them"
                     )
 
                 data.append(

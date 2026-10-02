@@ -1,7 +1,6 @@
 """Checks a full main.py run against the published results (Abdullayev et al., ACS Catal. 2025, 15, 4739).
 
-Not a unit test: it reads the tables and simulations that main.py saves, so run it after main.py,
-from the repository root:
+Not a unit test: it reads the results of the example study, so run it after the example:
     python main.py && python tests/check_reproduction.py
 
 Paper values come from the text and from reading Figures 4-6; tolerances cover that reading
@@ -16,15 +15,19 @@ import numpy as np
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 from auxiliary_functions import AuxiliaryFunctions
+from microkatc import initial_concentrations
 from microkinetics_simulation import SimulationHandler
 from readme_figures import (
-    C0_MK,
     CONVERSION,
+    MK,
     MK_SIMULATION_TIME,
     REACTANT,
+    STUDY,
     T,
     latest,
 )
+
+os.chdir(STUDY.results_dir)
 
 failures = []
 
@@ -86,10 +89,17 @@ check(
 
 # Figure 4: catalyst distribution at 1 h and time to 99 % conversion
 handler = SimulationHandler(
-    T, AuxiliaryFunctions.compute_pressure_value(T), REACTANT, MK_SIMULATION_TIME
+    T,
+    AuxiliaryFunctions.compute_pressure_value(T),
+    REACTANT,
+    MK_SIMULATION_TIME,
+    STUDY.output_step_s,
 )
-sims = [handler.get_simulation_df({**C0_MK, REACTANT: c}) for c in c0]
-cycles = AuxiliaryFunctions.find_intermediates_of_cycle(["0L", "1L"])
+sims = [
+    handler.get_simulation_df(initial_concentrations(STUDY, MK.initial_M, c))
+    for c in c0
+]
+cycles = {label: list(members) for label, members in STUDY.cycles.items()}
 zero_l, one_l = AuxiliaryFunctions.get_concentrations_of_catalyst(sims, 1, cycles)
 crossing = c0[np.argmax(np.array(one_l) > np.array(zero_l))]
 check(
@@ -100,7 +110,15 @@ check(
 )
 times = (
     AuxiliaryFunctions.compute_time_of_product_conversion_given_reactant_concentration(
-        sims, c0, REACTANT, CONVERSION * min(C0_MK[r] for r in ("CO", "H2", "ete"))
+        sims,
+        c0,
+        REACTANT,
+        [
+            CONVERSION
+            * STUDY.max_product_M(initial_concentrations(STUDY, MK.initial_M, c))
+            for c in c0
+        ],
+        STUDY.product,
     )
 )
 check("time to 99 % conversion, low PMe3 / h (paper 5.66)", times[0][0], 5.55, 5.75)

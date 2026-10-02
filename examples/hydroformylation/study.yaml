@@ -1,0 +1,57 @@
+# MicroKatc study: Rh-catalysed hydroformylation of ethylene with PMe3
+# Abdullayev et al., ACS Catal. 2025, 15, 4739 (doi:10.1021/acscatal.5c00348)
+name: Hydroformylation, 0L/1L ligand exchange
+
+species:
+  files: GaussOutputFiles          # <name>.out for every species and transition state
+  product: prod
+  overall_reaction: ete + CO + H2 <=> prod
+  cycles:
+    0L: [I1_0L, I2_0L, I3_0L, I4_0L, I5_0L, I6_0L, I7_0L, I8_0L, I9_0L]
+    1L: [I1_1L, I2c_1L, I2t_1L, I3_1L, I4_1L, I5_1L, I6_1L, I7_1L, I8_1L, I9c_1L, I9t_1L]
+
+steps:                             # every step is reversible; "via" names the transition state
+  - I1_0L <=> I2_0L + CO
+  - I2_0L + ete <=> I3_0L
+  - I3_0L <=> I4_0L  via TS1_0L
+  - I4_0L + CO <=> I5_0L
+  - I5_0L <=> I6_0L  via TS2_0L
+  - I6_0L + CO <=> I7_0L
+  - I6_0L + H2 <=> I8_0L  via TS3_0L
+  - I8_0L <=> I9_0L  via TS4_0L
+  - I9_0L <=> prod + I2_0L
+  - I2_0L + PMe3 <=> I1_1L
+  - I1_1L <=> I2c_1L + CO
+  - I2c_1L + ete <=> I3_1L
+  - I3_1L <=> I4_1L  via TS1_1L
+  - I4_1L + CO <=> I5_1L
+  - I5_1L <=> I6_1L  via TS2_1L
+  - I6_1L + CO <=> I7_1L
+  - I6_1L + H2 <=> I8_1L  via TS3_1L
+  - I8_1L <=> I9t_1L  via TS4t_1L
+  - I8_1L <=> I9c_1L  via TS4c_1L
+  - I9t_1L <=> I2t_1L + prod
+  - I9c_1L <=> prod + I2c_1L
+  - I2t_1L + CO <=> I1_1L
+
+conditions:
+  temperature_K: 350
+  studied_species: PMe3
+  studied_range_M: {from: 1e-10, to: 0.1, points: 19}
+
+analyses:
+  activation_energy:               # low catalyst concentration (differential reactor)
+    initial_M: {CO: 0.05, H2: 0.05, ete: 0.05, I1_0L: 1e-6}
+    temperatures_K: {from: 325, to: 375, points: 5}
+    simulation_time_s: 10000
+    sampling_time_h: 2
+  degree_of_rate_control:          # uses the activation_energy initial concentrations
+    e_shift_kcal_mol: 0.1
+    simulation_time_s: 10000
+    cores: 8
+  microkinetics:
+    initial_M: {CO: 0.05, H2: 0.05, ete: 0.05, I1_0L: 5e-4}
+    simulation_time_s: 100000
+    catalyst_snapshot_h: 1
+    conversion: 0.99
+    plot_species: [I7_0L, I7_1L, I1_0L, I1_1L]

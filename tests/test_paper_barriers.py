@@ -1,19 +1,16 @@
 """Gibbs barriers at 350 K must match Table S3 of the paper's Supporting Information.
 
-Abdullayev et al., ACS Catal. 2025, 15, 4739 (doi:10.1021/acscatal.5c00348). Runs the real
-thermochange step on GaussOutputFiles/, so it needs $thermochange exported; it is skipped otherwise.
+Abdullayev et al., ACS Catal. 2025, 15, 4739 (doi:10.1021/acscatal.5c00348). Builds the barrier
+table of examples/hydroformylation/study.yaml with the real thermochange, so it needs $thermochange
+exported; it is skipped otherwise.
     python tests/test_paper_barriers.py   (or: pytest tests)
 """
 
 import os
-import shutil
-import subprocess
 import sys
-import tempfile
-
-import pandas as pd
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+sys.path.insert(0, ROOT)
 
 # Rx, Gdir, Ginv in kcal/mol at 350.0 K and 1.0 M (SI Table S3, rounded to 0.1)
 TABLE_S3 = [
@@ -46,18 +43,11 @@ def test_barriers_match_paper():
     if not os.environ.get("thermochange"):
         print("skipped: export thermochange=/path/to/thermochange to run")
         return
-    work = os.path.join(tempfile.mkdtemp(), "MicroKatc")
-    shutil.copytree(ROOT, work, ignore=shutil.ignore_patterns(".git", "tests", "pics"))
-    code = (
-        "from auxiliary_functions import AuxiliaryFunctions as A;"
-        "A.calculate_G_values(350.0, A.compute_pressure_value(350.0))"
-    )
-    subprocess.run([sys.executable, "-c", code], cwd=work, check=True)
+    from study import load_study
+    from thermochemistry import barrier_table, gibbs_energies
 
-    out = os.path.join(
-        work, "G_values_of_reactions", "reaction_df_350.0K_2.87201e+01atm.csv"
-    )
-    df = pd.read_csv(out)
+    study = load_study(os.path.join(ROOT, "examples", "hydroformylation", "study.yaml"))
+    df = barrier_table(study, gibbs_energies(study, 350.0))
     assert len(df) == len(TABLE_S3)
     for (rx, gdir, ginv), (_, row) in zip(TABLE_S3, df.iterrows()):
         assert " ".join(row["Rx"].split()) == rx

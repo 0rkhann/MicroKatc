@@ -7,11 +7,16 @@ on:
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
-  # Also when a pull request changes this workflow or the check, so edits are tested before merging
+  # Also when a pull request changes the code, the example or the checks, so the full results are
+  # compared with the paper and with the pre-YAML baseline before merging
   pull_request:
     paths:
+      - "*.py"
+      - requirements.txt
+      - examples/hydroformylation/**
+      - tests/check_*.py
+      - tests/data/**
       - .github/workflows/nightly.yml
-      - tests/check_reproduction.py
 
 permissions:
   contents: read
@@ -46,7 +51,7 @@ jobs:
       - name: Run the full pipeline
         env:
           MPLBACKEND: Agg
-        run: python main.py
+        run: python microkatc.py run examples/hydroformylation/study.yaml
 
       - name: Build the README figures
         env:
@@ -58,6 +63,11 @@ jobs:
           set -o pipefail
           python tests/check_reproduction.py | tee -a "$GITHUB_STEP_SUMMARY"
 
+      - name: Check results against the pre-YAML baseline
+        run: |
+          set -o pipefail
+          python tests/check_equivalence.py examples/hydroformylation/results | tee -a "$GITHUB_STEP_SUMMARY"
+
       - name: Keep figures and result tables
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -67,6 +77,8 @@ jobs:
           if-no-files-found: warn
           path: |
             pics/*.png
-            microkinetics_simulations_images/
-            microkinetics_simulations/df_*.csv
-            G_values_of_reactions/
+            examples/hydroformylation/results/run_info.json
+            examples/hydroformylation/results/microkinetics.json
+            examples/hydroformylation/results/microkinetics_simulations_images/
+            examples/hydroformylation/results/microkinetics_simulations/df_*.csv
+            examples/hydroformylation/results/G_values_of_reactions/
