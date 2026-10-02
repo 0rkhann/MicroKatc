@@ -1,6 +1,6 @@
 import copasi_parser as cpx
 from plotting_functions import PlotFunctions
-from auxilary_functions import AuxiliaryFunctions
+from auxiliary_functions import AuxiliaryFunctions
 from file_operations import FileOperations, CURRENT_DIRECTORY
 from calculating_G_for_microkinetics import REACTION_DF_OUTPUT_DIR_NAME
 import os

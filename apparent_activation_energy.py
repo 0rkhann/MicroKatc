@@ -1,7 +1,7 @@
 from microkinetics_simulation import SimulationHandler, SIMULATIONS_OUTPUT_DIR_NAME
 import numpy as np
 import pandas as pd
-from auxilary_functions import AuxiliaryFunctions
+from auxiliary_functions import AuxiliaryFunctions
 from plotting_functions import PlotFunctions
 from scipy.constants import R
 import copasi_parser as cpx
@@ -147,7 +147,7 @@ class ApparentEaAnalysis:
         try:
             df_flux_path = os.path.join(CURRENT_DIRECTORY, SIMULATIONS_OUTPUT_DIR_NAME, self.df_flux_filename)
             self._df_flux = pd.read_csv(df_flux_path)
-            print(f"Reading existing flux dataframe with provide T range {self.T_values_array[::len(self.T_values_array)-1]} and reactant "
+            print(f"Reading existing flux dataframe with provided T range {self.T_values_array[::len(self.T_values_array)-1]} and reactant "
                   f"({self.reactant_to_study}) concentration range {self.reactant_concentration_array[::len(self.reactant_concentration_array)-1]}...")
         except:
             self._df_flux = None
@@ -155,7 +155,7 @@ class ApparentEaAnalysis:
         try:
             df_rate_path = os.path.join(CURRENT_DIRECTORY, SIMULATIONS_OUTPUT_DIR_NAME, self.df_rate_filename)
             self._df_rate = pd.read_csv(df_rate_path)
-            print(f"Reading existing rate dataframe with provide T range {self.T_values_array[::len(self.T_values_array)-1]} and reactant "
+            print(f"Reading existing rate dataframe with provided T range {self.T_values_array[::len(self.T_values_array)-1]} and reactant "
                   f"({self.reactant_to_study}) concentration range {self.reactant_concentration_array[::len(self.reactant_concentration_array)-1]}...")
         except:
             self._df_rate = None
@@ -265,7 +265,7 @@ class DRCAnalysis:
         try:
             df_drc_path = os.path.join(CURRENT_DIRECTORY, SIMULATIONS_OUTPUT_DIR_NAME, self.df_drc_filename)
             self._df_drc = pd.read_csv(df_drc_path)
-            print(f"Reading existing drc dataframe with provide T range {self.T_values_array[::len(self.T_values_array)-1]} and reactant "
+            print(f"Reading existing drc dataframe with provided T range {self.T_values_array[::len(self.T_values_array)-1]} and reactant "
                   f"({self.reactant_to_study}) concentration range {self.reactant_concentration_array[::len(self.reactant_concentration_array)-1]}...")
         except:
             self._df_drc = None
@@ -281,7 +281,7 @@ class DRCAnalysis:
         return self._df_drc
 
     def calculate_degree_of_rate_control(self):
-        """Calculates degree of rate control coefficients for each step in a system given different temperatures and different initial concentraitons of reactant to study"""
+        """Calculates degree of rate control coefficients for each step in a system given different temperatures and different initial concentrations of reactant to study"""
         data = []
 
         for T_value in self.T_values_array:
