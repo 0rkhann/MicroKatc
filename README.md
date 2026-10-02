@@ -66,58 +66,52 @@ The example data in this repository model the hydroformylation of ethene by a ho
 - The rate-determining step moves with the conditions: I8_0L ⇌ I9_0L controls the rate at low PMe<sub>3</sub>, and I3_1L ⇌ I4_1L takes over at high PMe<sub>3</sub>. The negative DRC of I3_0L ⇌ I4_0L shows that this step inhibits the 0L cycle.
 - More PMe<sub>3</sub> also releases more CO, which poisons the catalyst at the I6 ⇌ I7 steps. This is why the E<sub>a</sub> of the rate-determining steps rises and then plateaus.
 
-### 1. ln(r<sub>i</sub>) vs. 1/T
+All figures below are built by [`readme_figures.py`](readme_figures.py) from the results `main.py` saves. Blue is the 0L cycle, pink the 1L cycle and green the product. `main.py` also writes the full versions, for every step and every concentration, to `microkinetics_simulations_images/`.
+
+### 1. Arrhenius check
 
 <p align="center">
-  <img width="1600" alt="ln(ri) vs 1/T" src="pics/ln_ri_vs_1_over_T.svg"/>
+  <img width="100%" alt="ln(r) against 1000/T for the rate-determining step and product formation, in the 0L and 1L regimes" src="pics/arrhenius.png"/>
 </p>
 
-Arrhenius plots for each step at a fixed PMe<sub>3</sub> concentration. They check that every step is linear in 1/T and that the low-catalyst-concentration assumption holds. By default, only steps with R<sup>2</sup> > 0.9 are shown.
+The apparent E<sub>a</sub> comes from the slope of ln(r) against 1/T over 325–375 K, which is valid at low catalyst concentration. In each regime, product formation follows the same straight line as its rate-determining step, so the two share one E<sub>a</sub>. `main.py` draws this plot for every step and keeps those with R<sup>2</sup> > 0.9.
 
-### 2. Apparent E<sub>a</sub> of the rate-determining steps (flux-based)
+### 2. Apparent activation energy
 
 <p align="center">
-  <img width="1600" alt="Ea vs c0 flux based" src="pics/Ea_of_rate_determining_steps.png"/>
+  <img width="720" alt="Apparent Ea of the two rate-determining steps and of product formation against initial PMe3 concentration" src="pics/apparent_ea.png"/>
 </p>
 
-The rate-determining steps are those identified by the DRC analysis (figure 4). Their activation energy rises with c<sub>0</sub>(PMe<sub>3</sub>) and then plateaus as the catalyst saturates with PMe<sub>3</sub>. For both kinds of step, E<sub>a</sub> is lower in the 1L cycle than in the 0L cycle, so the 1L cycle has faster kinetics and dominates product formation. The rise before the plateau comes from CO release: more PMe<sub>3</sub> frees more CO, which poisons the catalyst at the I6 ⇌ I7 steps.
+The E<sub>a</sub> of both rate-determining steps rises with PMe<sub>3</sub> and then plateaus as the catalyst saturates with PMe<sub>3</sub>. The rise comes from CO release: more PMe<sub>3</sub> frees more CO, which poisons the catalyst at the I6 ⇌ I7 steps. E<sub>a</sub> is lower in the 1L cycle than in the 0L cycle, so the 1L cycle has faster kinetics and takes over product formation. The product's E<sub>a</sub> therefore falls from 23.5 to about 21.5 kcal mol<sup>-1</sup>, then settles at the 1L value of 22.1 kcal mol<sup>-1</sup>.
 
-### 3. Apparent E<sub>a</sub> of product formation (rate-based)
+### 3. Degree of rate control
 
 <p align="center">
-  <img width="700" alt="Ea vs c0 rate based" src="pics/Ea_c0(PMe3)_rate_based.svg"/>
+  <img width="720" alt="Degree of rate control of the three most influential steps against initial PMe3 concentration" src="pics/drc.png"/>
 </p>
 
-This E<sub>a</sub> comes from the rate of change of the product concentration. Overall it falls as PMe<sub>3</sub> increases, reflecting the activation of the 1L cycle. The slight increase at the highest concentrations is attributed to catalyst poisoning.
+I8_0L ⇌ I9_0L controls the rate in the 0L cycle, but it loses importance as the 1L cycle becomes active. The DRC of I3_1L ⇌ I4_1L grows with PMe<sub>3</sub>, making it the controlling step at high concentration. The DRC of I3_0L ⇌ I4_0L turns negative in the transition region, which shows that this step inhibits the 0L cycle.
 
-### 4. Degree of rate control vs. c<sub>0</sub>(PMe<sub>3</sub>)
+### 4. Catalyst distribution
 
 <p align="center">
-  <img width="1000" alt="DRC vs c0" src="pics/DRC_of_influencing_steps.png"/>
+  <img width="720" alt="Share of the catalyst in the 0L and 1L cycles at t = 1 h against initial PMe3 concentration" src="pics/catalyst_distribution.png"/>
 </p>
 
-I8_0L ⇌ I9_0L is rate-determining in the 0L cycle, but it loses importance as the 1L cycle becomes active. The DRC of I3_1L ⇌ I4_1L grows with PMe<sub>3</sub>, making it the controlling step at high concentration. The DRC of I3_0L ⇌ I4_0L becomes negative, which shows that this step inhibits the 0L cycle.
+The share of the catalyst in each cycle at t = 1 h, with 5 × 10<sup>-4</sup> M catalyst. Beyond about 5 × 10<sup>-4</sup> M PMe<sub>3</sub>, most of the catalyst is in the 1L cycle.
 
-### 5. Catalyst distribution between cycles
+### 5. Concentration profiles
 
 <p align="center">
-  <img width="700" alt="Catalyst concentration vs c0" src="pics/catalyst_distribution_350K.svg"/>
+  <img width="100%" alt="Concentrations of the resting states I1 and I7 of both cycles over time, at three PMe3 concentrations" src="pics/concentration_profiles.png"/>
 </p>
 
-The catalyst concentration in each cycle at t = 1 h, as PMe<sub>3</sub> increases. Beyond about 5 × 10<sup>-4</sup> M, the 1L cycle holds more catalyst than the 0L cycle.
+The resting states I1 and I7 of both cycles over time, at low, intermediate and high PMe<sub>3</sub>. As PMe<sub>3</sub> increases, the catalyst moves from the 0L species into their 1L counterparts.
 
-### 6. Concentration profiles over time
-
-<p align="center">
-  <img width="1000" alt="Concentration evolution" src="pics/concentration_evolution_350K.svg"/>
-</p>
-
-The time evolution of the resting states I1 and I7 of both cycles at each PMe<sub>3</sub> concentration. As PMe<sub>3</sub> increases, the catalyst moves from the 0L species into their 1L counterparts.
-
-### 7. Time to 99 % conversion
+### 6. Time to 99 % conversion
 
 <p align="center">
-  <img width="700" alt="Conversion time vs c0" src="pics/conversion_time_350K.svg"/>
+  <img width="720" alt="Time to 99 percent conversion against initial PMe3 concentration" src="pics/conversion_time.png"/>
 </p>
 
 The time for the product to reach 99 % of the maximum allowed by the limiting reactant (the threshold is adjustable). It drops from 5.7 h with the 0L cycle alone to 1.7 h once the 1L cycle takes over.
@@ -125,16 +119,10 @@ The time for the product to reach 99 % of the maximum allowed by the limiting re
 ### Putting it together
 
 <p align="center">
-  <img width="1000" alt="Combined analysis" src="pics/final_pieces.png"/>
+  <img width="720" alt="Concentrations of the poisoning intermediates I1 and I7 of both cycles at t = 2 h against initial PMe3 concentration" src="pics/poisoning_intermediates.png"/>
 </p>
 
-[`readme_figures.py`](readme_figures.py) builds this figure, and figures 2 and 4, from the results `main.py` saves. All three panels use the low catalyst concentration that the apparent E<sub>a</sub> analysis requires.
-
-- **Panel 1:** at t = 2 h, as c<sub>0</sub>(PMe<sub>3</sub>) increases, the poisoning intermediates I1_0L and I7_0L decrease, while I1_1L and I7_1L increase.
-- **Panel 2:** the E<sub>a</sub> of the rate-determining steps rises in both cycles. The product's E<sub>a</sub> still falls, from 23.5 to about 21.5 kcal mol<sup>-1</sup>, because the 1L cycle takes over product release; it then settles at the 1L value of 22.1 kcal mol<sup>-1</sup>.
-- **Panel 3:** the DRC of I8_0L ⇌ I9_0L falls, because I3_0L ⇌ I4_0L inhibits the 0L cycle and pushes the catalyst into the 1L cycle, raising the DRC of I3_1L ⇌ I4_1L.
-
-This explains why the E<sub>a</sub> of the 1L rate-determining step increases even though the 1L cycle becomes more active. As entering the 1L cycle gets easier, its own poisoning intermediates build up, which makes product formation in that cycle harder.
+Why does the E<sub>a</sub> of the 1L rate-determining step increase (figure 2) even though the 1L cycle becomes more active? As PMe<sub>3</sub> increases, I3_0L ⇌ I4_0L inhibits the 0L cycle and pushes the catalyst into the 1L cycle (figure 3). At the same time, the poisoning intermediates of the 0L cycle (I1_0L, I7_0L) decrease, and those of the 1L cycle (I1_1L, I7_1L) build up (above, at the low catalyst concentration of the E<sub>a</sub> analysis). Product formation in the 1L cycle therefore gets harder, which raises its E<sub>a</sub>.
 
 ## Reproducing the paper
 
