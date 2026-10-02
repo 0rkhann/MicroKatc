@@ -30,13 +30,9 @@ and by reading the code paths.
 - Keep the README's scientific discussion; fix its structure, links and wording only.
 - Small, reviewable PRs: one theme per PR.
 
-## Known issues worth fixing
+## Reproducing the paper
 
-- README image links point to other repos (`MesoKinetix`, `MicroKatc_private`); use relative
-  `pics/...` paths.
-- `requirements.txt` is a whole-system `pip freeze` (apturl, dell-recovery, ...). Reduce it to what
-  the code imports: numpy, pandas, scipy, matplotlib, seaborn, and the pinned
-  `copasi_helper` git dependency.
-- No citation for the paper: add `CITATION.cff` and a "Citation" README section.
-- Typos: `auxilary_functions.py` (rename only with every import updated), "verisons", "foe",
-  "concentraiton".
+With thermochange exported and the pinned requirements (Python 3.10), `python main.py`
+reproduces the paper's figures, and `tests/test_paper_barriers.py` checks the barriers against SI
+Table S3. Keep `main.py`'s conditions (0.05 M reactants, [Rh] = 1e-6 M for Ea and DRC, 5e-4 M for
+the catalyst distribution, 350 K, 19 concentrations from 1e-10 to 0.1 M) unless asked to change them.
