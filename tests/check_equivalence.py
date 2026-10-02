@@ -55,6 +55,10 @@ def merged(results, kind, names):
         )[0]
     )
     column = next(c for c in old.columns if c.startswith("c0("))
+    # The concentrations come from a log spacing whose last bit differs between machines
+    # (1e-10 here, 9.999999999999999e-11 on GitHub's runners), so match them rounded
+    for df in (old, new):
+        df[column] = df[column].map(lambda c: float(f"{c:.12g}"))
     both = old.merge(new, on=["name", column], suffixes=("_old", "_new"))
     both = both[both["name"].isin(names)]
     expected = old[old["name"].isin(names)]
