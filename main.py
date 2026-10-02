@@ -104,10 +104,8 @@ def main():
     # Indicate the energy shift for the calculation of degree rate control (DRC)
     e_shift = 0.01
 
-    # Specify range of T for which simulations will be calculated (Ea analysis)
-    T_values_array_drc = np.linspace(
-        start=temperature_value - 25, stop=temperature_value + 25, num=1, endpoint=True
-    )
+    # Temperature(s) at which DRC is calculated: the working temperature, as in the paper
+    T_values_array_drc = np.array([temperature_value])
 
     # Specify simulation time for apparent Ea analysis (in seconds)
     total_simulation_time_drc = 10_000
