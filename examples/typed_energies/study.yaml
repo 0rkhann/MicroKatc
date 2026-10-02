@@ -1,0 +1,32 @@
+# MicroKatc study with typed energies: one catalytic cycle, no output files needed.
+# C1 binds the substrate S (barrierless) and releases the product P over TS1.
+name: Typed-energy example, one catalytic cycle
+
+species:
+  energies_kcal_mol:               # Gibbs energies at 300 K and 1 M, kcal/mol, any common reference
+    S: 0.0
+    P: -10.0
+    C1: 0.0
+    C2: -2.0
+    TS1: 15.0
+  product: P
+  overall_reaction: S <=> P
+  cycles:
+    cat: [C1, C2]
+
+steps:
+  - C1 + S <=> C2                  # barrierless: 4 kcal/mol above the higher side
+  - C2 <=> C1 + P  via TS1
+
+conditions:
+  temperature_K: 300
+  studied_species: S
+  studied_range_M: {from: 0.01, to: 0.1, points: 3}
+
+analyses:
+  microkinetics:
+    initial_M: {C1: 1e-3}
+    simulation_time_s: 1000
+    catalyst_snapshot_h: 0.01      # 36 s
+    conversion: 0.99
+    plot_species: [C1, C2, S, P]
