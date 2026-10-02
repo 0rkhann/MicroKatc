@@ -1,6 +1,9 @@
+# Versions used to reproduce the ACS Catal. 2025 results (Python 3.10)
 matplotlib==3.5.1
 numpy==1.26.0
 pandas==1.5.3
-scipy==1.8.0
+scipy==1.11.4
 seaborn==0.13.2
-CopasiHelper @ git+https://gitlab.com/dgarayr/copasi_helper.git@4e9d30ff48ea5b2201fc1447ee31e23e6a213aa5
+python-copasi==4.44.295
+# First copasi_helper commit with parallel DRC (drc_calc(..., cores=...)), which MicroKatc uses
+CopasiHelper @ git+https://gitlab.com/dgarayr/copasi_helper.git@b9f26fe4f8e393cf0eab38d70c71adc37a61864a
