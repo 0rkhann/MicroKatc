@@ -6,7 +6,7 @@
   <a href="https://doi.org/10.1021/acscatal.5c00348"><img alt="Published in ACS Catalysis" src="https://img.shields.io/badge/ACS%20Catal.-2025%2C%2015%2C%204739-1f6feb"/></a>
   <a href="https://doi.org/10.1021/acscatal.5c00348"><img alt="DOI" src="https://img.shields.io/badge/DOI-10.1021%2Facscatal.5c00348-blue"/></a>
   <a href="https://github.com/0rkhann/MicroKatc/actions/workflows/tests.yml"><img alt="Tests" src="https://github.com/0rkhann/MicroKatc/actions/workflows/tests.yml/badge.svg"/></a>
-  <img alt="Python 3" src="https://img.shields.io/badge/python-3-3776AB?logo=python&logoColor=white"/>
+  <img alt="Python 3.10" src="https://img.shields.io/badge/python-3.10-3776AB?logo=python&logoColor=white"/>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-green"/></a>
   <br/><br/>
   <a href="https://doi.org/10.1021/acscatal.5c00348"><img width="640" alt="Graphical abstract: microkinetic modelling of ligand exchange between catalytic cycles X and Y, giving activation energy, resting state and catalyst speciation" src="pics/toc_graphic.jpg"/></a>
