@@ -30,7 +30,7 @@ class SimulationHandler:
         )
 
     def run_simulation(self, simulation_filename, c0, convergence_flag=True):
-        """Runs the microkinetics simulation and returns the results as a DataFrame"""
+        """Runs the microkinetics simulation and returns the results as a DataFrame (time in seconds)"""
         ch = cpx.prepare_copasi_model(
             reactions_file=self.datafile,
             temp=self.temperature_value,
@@ -54,7 +54,6 @@ class SimulationHandler:
                 simulation_df, simulation_filename, c0
             )
 
-        simulation_df.loc[:, "time"] *= CONVERT_SECONDS_TO_HOURS
         ch.self_destruct()
         return simulation_df
 
@@ -66,9 +65,6 @@ class SimulationHandler:
                 f"{simulation_filename} couldn't converge to a solution. Resimulating..."
             )
             simulation_df = self.run_simulation(simulation_filename, c0, False)
-            FileOperations.move_to_output_directory(
-                SIMULATIONS_OUTPUT_DIR_NAME, simulation_filename
-            )
             convergence_counter += 1
             if convergence_counter == 5:
                 raise ConvergenceError(
@@ -108,6 +104,7 @@ class SimulationHandler:
             FileOperations.move_to_output_directory(
                 SIMULATIONS_OUTPUT_DIR_NAME, simulation_filename
             )
+            simulation_df.loc[:, "time"] *= CONVERT_SECONDS_TO_HOURS
             return simulation_df
 
 
@@ -191,8 +188,8 @@ class MicroKinetics:
                 figsize,
                 fig_name,
                 temperature,
-                log_y,
-                log_x,
+                log_x=log_x,
+                log_y=log_y,
             )
             self.plot_functions.save_figure(fig_name)
 
