@@ -8,7 +8,10 @@ import subprocess
 
 import pandas as pd
 
-from calculating_G_for_microkinetics import G_COMPOUNDS_OUTPUT_DIR_NAME
+from calculating_G_for_microkinetics import (
+    G_COMPOUNDS_OUTPUT_DIR_NAME,
+    REACTION_DF_OUTPUT_DIR_NAME,
+)
 from file_operations import CURRENT_DIRECTORY
 
 R_L_atm_per_mol_K = 0.082057366080960
@@ -132,9 +135,13 @@ class AuxiliaryFunctions:
         G_compounds_file_path = os.path.join(
             CURRENT_DIRECTORY, G_COMPOUNDS_OUTPUT_DIR_NAME, G_compounds_file_name
         )
+        reaction_df_file_path = os.path.join(
+            CURRENT_DIRECTORY, REACTION_DF_OUTPUT_DIR_NAME, reaction_df_file_name
+        )
+        outputs = [G_compounds_file_path, reaction_df_file_path]
 
-        # Calculations will be executed if the file with specified T and P doesn't in a dedicated directory
-        if not os.path.exists(G_compounds_file_path):
+        # Calculations will be executed if either file for the specified T and P is missing
+        if not all(os.path.exists(path) for path in outputs):
             # Path to the Bash script
             script_path = os.path.join(CURRENT_DIRECTORY, "get_G_compounds.sh")
             print(f"Creating and saving: {reaction_df_file_name}")
@@ -146,11 +153,18 @@ class AuxiliaryFunctions:
                 check=False,
             )
             # get_G_compounds.sh exits 0 even when thermochange or the Python step fails,
-            # so check for its output file instead of the exit code.
-            if not os.path.exists(G_compounds_file_path):
+            # so check for its output files instead of the exit code. A failure can leave the
+            # compound file without the reaction file; remove it so the next run starts clean.
+            missing = [path for path in outputs if not os.path.exists(path)]
+            if missing:
+                for path in outputs:
+                    if os.path.exists(path):
+                        os.remove(path)
                 raise RuntimeError(
-                    f"get_G_compounds.sh did not create {G_compounds_file_path}. "
-                    f"Is $thermochange exported?\n{result.stdout}{result.stderr}"
+                    f"get_G_compounds.sh did not create {', '.join(missing)}. "
+                    "Is $thermochange exported, and does every species and transition state "
+                    "in reactions.csv have a .out file in GaussOutputFiles/?\n"
+                    f"{result.stdout}{result.stderr}"
                 )
 
     @staticmethod
