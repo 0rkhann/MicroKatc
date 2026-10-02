@@ -206,8 +206,18 @@ class ApparentEaAnalysis:
 
         self.plot_function = PlotFunctions()
 
-        self.df_flux_filename = f"df_flux_T_range_{self.T_values_array[0]}K_{self.T_values_array[-1]}K_C({self.reactant_to_study})_{self.reactant_concentration_array[0]}M_{self.reactant_concentration_array[-1]}M.csv"
-        self.df_rate_filename = f"df_rate_T_range_{self.T_values_array[0]}K_{self.T_values_array[-1]}K_C({self.reactant_to_study})_{self.reactant_concentration_array[0]}M_{self.reactant_concentration_array[-1]}M.csv"
+        inputs_hash = AuxiliaryFunctions.inputs_hash(
+            self.T_values_array,
+            self.reactant_concentration_array,
+            self.reactant_to_study,
+            self.c0,
+            self.total_simulation_time,
+            self.time,
+            self.time_step,
+            self.reactions,
+        )
+        self.df_flux_filename = f"df_flux_T_range_{self.T_values_array[0]}K_{self.T_values_array[-1]}K_C({self.reactant_to_study})_{self.reactant_concentration_array[0]}M_{self.reactant_concentration_array[-1]}M_{inputs_hash}.csv"
+        self.df_rate_filename = f"df_rate_T_range_{self.T_values_array[0]}K_{self.T_values_array[-1]}K_C({self.reactant_to_study})_{self.reactant_concentration_array[0]}M_{self.reactant_concentration_array[-1]}M_{inputs_hash}.csv"
 
         self._df = None
 
@@ -370,7 +380,16 @@ class DRCAnalysis:
 
         self.plot_function = PlotFunctions()
 
-        self.df_drc_filename = f"df_drc_T_range_{self.T_values_array[0]}K_{self.T_values_array[-1]}K_C({self.reactant_to_study})_{self.reactant_concentration_array[0]}M_{self.reactant_concentration_array[-1]}M.csv"
+        inputs_hash = AuxiliaryFunctions.inputs_hash(
+            self.T_values_array,
+            self.reactant_concentration_array,
+            self.reactant_to_study,
+            self.c0,
+            self.total_simulation_time,
+            self.reactions,
+            self.e_shift,
+        )
+        self.df_drc_filename = f"df_drc_T_range_{self.T_values_array[0]}K_{self.T_values_array[-1]}K_C({self.reactant_to_study})_{self.reactant_concentration_array[0]}M_{self.reactant_concentration_array[-1]}M_{inputs_hash}.csv"
 
         try:
             df_drc_path = os.path.join(
