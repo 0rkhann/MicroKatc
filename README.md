@@ -124,10 +124,10 @@ The time for the product to reach 99 % of the maximum allowed by the limiting re
   <img width="1000" alt="Combined analysis" src="pics/final_pieces.png"/>
 </p>
 
-These panels are not produced by `main.py`, but a few extra lines of code generate them from the same results. The first panel was simulated at low catalyst concentration, as the apparent E<sub>a</sub> analysis requires.
+[`readme_figures.py`](readme_figures.py) builds this figure, and figures 2 and 4, from the results `main.py` saves. All three panels use the low catalyst concentration that the apparent E<sub>a</sub> analysis requires.
 
-- **Panel 1:** as c<sub>0</sub>(PMe<sub>3</sub>) increases, the poisoning intermediates I1_0L and I7_0L decrease, while I1_1L and I7_1L increase.
-- **Panel 2:** the E<sub>a</sub> of the rate-determining steps rises in both cycles. The product's E<sub>a</sub> still falls, because the 1L cycle takes over product release.
+- **Panel 1:** at t = 2 h, as c<sub>0</sub>(PMe<sub>3</sub>) increases, the poisoning intermediates I1_0L and I7_0L decrease, while I1_1L and I7_1L increase.
+- **Panel 2:** the E<sub>a</sub> of the rate-determining steps rises in both cycles. The product's E<sub>a</sub> still falls, from 23.5 to about 21.5 kcal mol<sup>-1</sup>, because the 1L cycle takes over product release; it then settles at the 1L value of 22.1 kcal mol<sup>-1</sup>.
 - **Panel 3:** the DRC of I8_0L ⇌ I9_0L falls, because I3_0L ⇌ I4_0L inhibits the 0L cycle and pushes the catalyst into the 1L cycle, raising the DRC of I3_1L ⇌ I4_1L.
 
 This explains why the E<sub>a</sub> of the 1L rate-determining step increases even though the 1L cycle becomes more active. As entering the 1L cycle gets easier, its own poisoning intermediates build up, which makes product formation in that cycle harder.
