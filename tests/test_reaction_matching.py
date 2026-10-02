@@ -22,6 +22,7 @@ def _flux_df(n_fluxes, order=None):
             "c0(A)": 1.0,
             "1/T": 1 / T,
             "ln_value": -k * 1000 / T,
+            "sign": 1,
         }
         for k in (order or range(1, n_fluxes + 1))
         for T in (300.0, 310.0, 320.0)
