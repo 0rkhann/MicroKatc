@@ -1,4 +1,4 @@
-from auxilary_functions import AuxiliaryFunctions
+from auxiliary_functions import AuxiliaryFunctions
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -29,7 +29,7 @@ def main():
                                                endpoint = True
     )
 
-    # Specify initial concentrations for reactants, products, and a catalyst (case foe Ea analysis requires for very small concentration of a catalyst)
+    # Specify initial concentrations for reactants, products, and a catalyst (case for Ea analysis requires for very small concentration of a catalyst)
     c0_1 = {"CO": 1, "H2": 1, "ete": 1, "prod": 0, "I1_0L": 0.000001, "PMe3": 0.0000005}
 
     # Specify a reactant to study
@@ -56,7 +56,7 @@ def main():
                                    time_step
     )
 
-    # Specify reactant initial concentraiton from the concentration array that will be considered for ln(ri) vs. 1/T plot
+    # Specify reactant initial concentration from the concentration array that will be considered for ln(ri) vs. 1/T plot
     reactant_initial_concentration_plot = reactant_concentration_array[0]
 
     # Specify reactions that will be on plot of Ea vs. c0 (flux based)
@@ -111,7 +111,7 @@ def main():
     # Adjust nrows and ncols to your case
     analysis2.plot_drc_vs_c0(nrows = 5, ncols = 5, figsize = (15, 15), df_drc = df_drc, temperature_value = temperature_value_drc_plot, log_x = True)
 
-    # You can set now higher concentraiton of catalyst if needed
+    # You can set now higher concentration of catalyst if needed
     c0_2 = {"CO": 0.1, "H2": 0.1, "ete": 0.1, "prod": 0, "I1_0L": 0.000005, "PMe3": 1}
 
     # Specify cycle names

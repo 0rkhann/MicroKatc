@@ -24,7 +24,7 @@ class PlotFunctions:
         print(f"Plotting: {fig_name}...")
         fig, axes = self.initialize_fig_axes_objects(figsize = figsize)
 
-        # Iterate though each cycle and plot on the same graph catalyst concentration in each in a function of initial reactant concentration (at specified time)
+        # Iterate through each cycle and plot on the same graph catalyst concentration in each in a function of initial reactant concentration (at specified time)
         for ax in axes:
             for i, cycle in enumerate(cycles):
                 self.plot_axe_from_arrays(x = reactant_concentrations, 
@@ -76,7 +76,7 @@ class PlotFunctions:
 
     @staticmethod
     def plot_axe_from_arrays(x, y, xlabel, ylabel, title, ax, legend=None):
-        """Plots a graph with provided x and y values. Plots with "o" markers on it and as a continious line"""
+        """Plots a graph with provided x and y values. Plots with "o" markers on it and as a continuous line"""
         ax.plot(x, y, "o", label = legend, linestyle = "-")
         if legend:
             ax.legend()
@@ -269,7 +269,7 @@ class PlotFunctions:
 
     @staticmethod
     def save_figure(fig_name):
-        """Saves a figure in the dedicates directory"""
+        """Saves a figure in the dedicated directory"""
         try:
             print(f"Saving the figure: {fig_name}")
             plt.savefig(fig_name, dpi = 300)
