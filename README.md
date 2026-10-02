@@ -21,7 +21,7 @@ The approach is published in:
 
 - **End-to-end pipeline:** raw DFT output files in, publication-ready figures out, driven by one script.
 - **Apparent activation energy (E<sub>a</sub>)** from Arrhenius fits of every step's flux and every species' rate of change, swept over temperature and over the concentration of any chosen reactant.
-- **Degree of rate control (DRC)** for every elementary step, parallelised across CPU cores, to identify the rate-determining and inhibiting steps.
+- **Degree of rate control (DRC)** for every elementary step, by central finite differences parallelised across CPU cores, to identify the rate-determining and inhibiting steps.
 - **Multi-cycle catalyst tracking:** the catalyst concentration in each competing cycle (for example 0-ligand vs. 1-ligand cycles) as conditions change.
 - **Conversion-time analysis:** time to reach a set product yield as a function of reactant concentration.
 - **Result caching:** simulations and fitted parameters are saved as CSV files and reused, so long parameter sweeps never repeat finished work.
@@ -141,7 +141,7 @@ With the settings in `main.py`, a full run takes a few minutes and reproduces th
 | Gibbs barriers of all 22 steps at 5 temperatures (SI Tables S1–S5) | 0.1 kcal mol<sup>-1</sup> precision | identical |
 | Time to 99 % conversion, 0L only → 1L (Figure 4) | 5.66 h → 1.69 h | 5.67 h → 1.69 h |
 | Apparent E<sub>a</sub> of product formation (Figure 6) | 23.5 → 21.4 → 22.1 kcal mol<sup>-1</sup> | 23.5 → 21.5 → 22.1 kcal mol<sup>-1</sup> |
-| Minimum DRC of I3_0L ⇌ I4_0L (Figure 5) | −0.22 at 3 × 10<sup>-4</sup> M | −0.23 at 3 × 10<sup>-4</sup> M |
+| Minimum DRC of I3_0L ⇌ I4_0L (Figure 5) | −0.22 at 3 × 10<sup>-4</sup> M | −0.22 at 3 × 10<sup>-4</sup> M |
 
 [`tests/test_paper_barriers.py`](tests/test_paper_barriers.py) checks the barriers against SI Table S3 on every run with thermochange installed.
 
