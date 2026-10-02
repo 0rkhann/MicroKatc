@@ -1,173 +1,202 @@
 # Using MicroKatc on your own system
 
-This guide takes you from your own DFT calculations to the full set of analyses. The repository ships a complete worked example (the Rh-catalysed hydroformylation of the paper): run it once as is before changing anything, so you know your installation reproduces the published numbers.
+You describe a system in one **study file** (YAML) and run it with one command. Two complete examples ship with the repository:
 
+- [`examples/hydroformylation/study.yaml`](../examples/hydroformylation/study.yaml): the paper's system, with energies from Gaussian output files. Run it once before writing your own study, to confirm your installation reproduces the published numbers.
+- [`examples/typed_energies/study.yaml`](../examples/typed_energies/study.yaml): a small catalytic cycle with typed Gibbs energies, for when you have energies but no Gaussian files. It runs in a few seconds.
+
+Contents:
 - [1. Install](#1-install)
-- [2. Prepare the inputs](#2-prepare-the-inputs)
-- [3. Set the parameters](#3-set-the-parameters)
-- [4. Run](#4-run)
-- [5. Outputs](#5-outputs)
-- [6. Re-running after you change something](#6-re-running-after-you-change-something)
-- [7. Troubleshooting](#7-troubleshooting)
+- [2. Write a study file](#2-write-a-study-file)
+- [3. Check and run](#3-check-and-run)
+- [4. Outputs](#4-outputs)
+- [5. Troubleshooting](#5-troubleshooting)
 
 ## 1. Install
 
-You need Python 3.10, Bash, and thermochange. The COPASI Python bindings and copasi_helper are installed by `requirements.txt`.
+You need Python 3.10 and Bash (Linux or macOS; Windows through WSL). thermochange is only needed for studies that read output files.
 
 ```bash
 git clone https://gitlab.com/dgarayr/thermochange.git
 git clone https://github.com/0rkhann/MicroKatc.git
 cd MicroKatc
 python3.10 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.txt          # includes COPASI's Python bindings and copasi_helper
 export thermochange=/path/to/thermochange
 ```
 
-`thermochange` must be **exported**, not just set: `main.py` calls `get_G_compounds.sh` in a subprocess, which only sees exported variables.
+`thermochange` must be **exported**, not just set: MicroKatc runs it in subprocesses, which only see exported variables.
 
-Check the installation by running the example and comparing it with the paper:
+Check the installation against the paper:
 
 ```bash
-python main.py
+python microkatc.py run examples/hydroformylation/study.yaml
 python tests/check_reproduction.py
 ```
 
 The last line should read `All results match the paper.`
 
-## 2. Prepare the inputs
+## 2. Write a study file
 
-MicroKatc reads two inputs from the repository root.
+A study file has four parts: `species`, `steps`, `conditions` and `analyses`. Start from one of the examples.
 
-### `GaussOutputFiles/`
+### 2.1 Steps
 
-One Gaussian output file per chemical species and per transition state, from a frequency calculation (thermochange needs the vibrational frequencies to correct the Gibbs energies). **The file name, without `.out`, is the species name** used everywhere else. The free molecules (reactants, products, ligands) need their own files too.
+One line per elementary step. Every step is reversible.
 
-```
-GaussOutputFiles/
-├── CO.out          # free molecules
-├── H2.out
-├── ete.out
-├── PMe3.out
-├── prod.out
-├── I1_0L.out       # catalyst intermediates
-├── ...
-└── TS1_0L.out      # transition states
+```yaml
+steps:
+  - I1_0L <=> I2_0L + CO           # barrierless
+  - I3_0L <=> I4_0L  via TS1_0L    # transition state named after "via"
+  - 2 A <=> A2  via TS2            # coefficients: "2 A" or "2*A"
 ```
 
-### `reactions.csv`
+- `<=>`, `=` and `⇌` all mean the same.
+- Species are separated by ` + `. Names are case-sensitive, start with a letter and contain no spaces.
+- A **barrierless** step (no `via`) is treated as diffusion-controlled: its transition state is placed 4 kcal mol<sup>-1</sup> above the higher of its two sides (Besora et al., 2018).
+- A **coefficient** n multiplies the species' Gibbs energy in the barrier, G(TS) − n·G(A), and gives a rate law of order n in that species.
 
-One row per elementary step:
+### 2.2 Species and energies
 
-| Column | Content |
+```yaml
+species:
+  files: GaussOutputFiles          # either: one <name>.out per species and transition state
+  product: prod
+  overall_reaction: ete + CO + H2 <=> prod
+  cycles:
+    0L: [I1_0L, I2_0L, ...]
+    1L: [I1_1L, I2c_1L, ...]
+```
+
+| Key | Meaning |
 | --- | --- |
-| `Rx` | The step, as `A + B = C`. Species separated by ` + `, sides by one `=`. Every step is reversible. |
-| `TS` | The name of the transition state's output file, or `-` for a barrierless step. |
-| `Gdir`, `Ginv` | Leave empty: MicroKatc fills in the forward and reverse barriers. |
+| `files` | Folder, relative to the study file, with the Gaussian (or ADF) output of a frequency calculation for every species and transition state. The file name without `.out` is the species name. |
+| `energies_kcal_mol` | Instead of `files`: typed Gibbs energies (section 2.3). A study uses one or the other. |
+| `product` | The species whose formation the degree of rate control and the conversion time follow. |
+| `overall_reaction` | The net reaction, with coefficients. It sets the maximum yield: the smallest initial concentration ÷ coefficient over its reactants, times the product's coefficient. |
+| `cycles` | Cycle label → the catalyst intermediates in that cycle. Needed for the `microkinetics` analysis. |
+| `vibrational_correction` | `RRHO` (default) or `Grimme` (quasi-RRHO, thermochange's `-g`). Output files only. |
 
-```csv
-Rx,TS,Gdir,Ginv
-I1_0L = I2_0L + CO,-,,
-I2_0L + ete = I3_0L,-,,
-I3_0L = I4_0L,TS1_0L,,
-I6_0L + H2 = I8_0L,TS3_0L,,
+Output-file energies are corrected by thermochange to each temperature and a 1 M standard state.
+
+### 2.3 Typed energies
+
+```yaml
+species:
+  energies_kcal_mol:
+    I1_0L: 0.0                                     # used at the working temperature only
+    TS1_0L: {325: 11.5, 337.5: 11.5, 350: 11.5, 362.5: 11.5, 375: 11.5}
 ```
 
-A barrierless step is treated as diffusion-controlled: its transition state is placed 4 kcal mol<sup>-1</sup> above the higher of its two sides (Besora et al., 2018).
+- Gibbs energies in kcal mol<sup>-1</sup> at 1 M, on any common reference: only differences enter the barriers.
+- A single number is used at the working temperature only. The `activation_energy` analysis needs a value at every one of its temperatures, because the Arrhenius fit depends on how G changes with temperature.
 
-### Naming rules
+### 2.4 Conditions
 
-The analyses find species by name, so three conventions matter:
+```yaml
+conditions:
+  temperature_K: 350
+  studied_species: PMe3
+  studied_range_M: {from: 1e-10, to: 0.1, points: 19}   # log-spaced
+  output_step_s: 1                                      # optional, default 1
+```
 
-- **The product must be called `prod`.** The DRC is computed on the rate of `prod`, and the conversion time watches its concentration.
-- **Catalyst intermediates are named `I<number>[letters]_<cycle>`**, for example `I3_0L`, `I2c_1L` or `I9t_1L`. The catalyst distribution sums every intermediate whose name ends in `_<cycle>`, for each label in `cycles`.
-- **Every species in `Rx` and every name in `TS`** needs a matching `.out` file.
+Every analysis is repeated for each concentration of the studied species. `output_step_s` is the time between output points of every simulation; sampling and snapshot times must fall on that grid.
 
-## 3. Set the parameters
+### 2.5 Analyses
 
-All parameters are set, and commented, at the top of `main()` in [`main.py`](../main.py). Concentrations are in M.
+Request any of the three; those left out are skipped.
 
-**Shared**
+```yaml
+analyses:
+  activation_energy:               # needs a low catalyst concentration (differential reactor)
+    initial_M: {CO: 0.05, H2: 0.05, ete: 0.05, I1_0L: 1e-6}
+    temperatures_K: {from: 325, to: 375, points: 5}       # at least 3
+    simulation_time_s: 10000
+    sampling_time_h: 2             # rates are read at this time for the Arrhenius fits
+  degree_of_rate_control:
+    e_shift_kcal_mol: 0.1          # central difference: every barrier shifted up and down
+    simulation_time_s: 10000       # rates are read at half of it
+    cores: 8                       # optional, default: all CPUs
+    # initial_M: optional, default: the activation_energy one
+  microkinetics:
+    initial_M: {CO: 0.05, H2: 0.05, ete: 0.05, I1_0L: 5e-4}
+    simulation_time_s: 100000
+    catalyst_snapshot_h: 1         # time of the catalyst-distribution snapshot
+    conversion: 0.99               # yield that defines the conversion time
+    plot_species: [I7_0L, I7_1L, I1_0L, I1_1L]
+```
 
-| Parameter | Meaning | Example |
-| --- | --- | --- |
-| `temperature_value` | Working temperature (K) | `350.0` |
-| `reactant_to_study` | The species whose initial concentration is varied | `"PMe3"` |
-| `reactant_concentration_array` | Its initial concentrations; set by `left_border_concentration`, `right_border_concentration` (log10 M) and `num` | 19 points, 10<sup>-10</sup>–10<sup>-1</sup> M |
-| `time_step` | Output step of the simulations (s) | `1` |
+In every `initial_M`, species not listed start at 0. Do not list the studied species (it takes each value of `studied_range_M`) or the product (it starts at 0).
 
-**Apparent activation energy and DRC.** These need a low catalyst concentration (a differential reactor), so that rates stay in the low-conversion regime.
+### 2.6 YAML details
 
-| Parameter | Meaning | Example |
-| --- | --- | --- |
-| `c0_1` | Initial concentrations: reactants, `prod`, the catalyst's starting intermediate | `{"CO": 0.05, "H2": 0.05, "ete": 0.05, "prod": 0, "I1_0L": 1e-6, ...}` |
-| `T_values_array_Ea` | Temperatures for the Arrhenius fits (K) | 325–375 K, 5 points |
-| `total_simulation_time_Ea` | Simulated time (s) | `10_000` |
-| `time` | Time at which rates are read for the fits (h) | `2` |
-| `e_shift` | Barrier shift for the central-difference DRC (kcal mol<sup>-1</sup>) | `0.1` |
-| `total_simulation_time_drc` | Simulated time for the DRC (s); rates are read at half of it | `10_000` |
-| `cores` | Processes for the DRC | `8` |
+MicroKatc reads study files with three deliberate differences from plain YAML:
 
-**Catalyst distribution, concentration profiles and conversion time.** These use a realistic catalyst concentration.
+- `1e-10` is a number (standard YAML 1.1 readers treat it as text).
+- Only lowercase `true` and `false` are booleans, so a species called `NO` or `ON` works as a key.
+- A key given twice is an error, not silently overwritten.
 
-| Parameter | Meaning | Example |
-| --- | --- | --- |
-| `c0_2` | Initial concentrations | `{"CO": 0.05, "H2": 0.05, "ete": 0.05, "prod": 0, "I1_0L": 5e-4, ...}` |
-| `cycles` | Cycle labels, the suffixes of the intermediate names | `["0L", "1L"]` |
-| `total_simulation_time_microkinetics` | Simulated time (s) | `100_000` |
-| `main_reactants` | Reactants that can limit the yield; the smallest initial concentration sets the 100 % yield | `["CO", "H2", "ete"]` |
-| `compounds_to_plot` | Species in the concentration-profile figure | `["I7_0L", "I7_1L", "I1_0L", "I1_1L"]` |
-| `catalyst_concentration_time` | Time of the catalyst-distribution snapshot (h) | `1` |
-| `percentage_of_convertion` | Yield that defines the conversion time | `0.99` |
-
-`reactant_to_study` must be a key of both `c0_1` and `c0_2`: its value there is replaced by each concentration of `reactant_concentration_array`.
-
-## 4. Run
+## 3. Check and run
 
 ```bash
-python main.py
+python microkatc.py check my_study/study.yaml     # checks everything, runs nothing
+python microkatc.py run my_study/study.yaml       # runs every requested analysis
+python microkatc.py run my_study/study.yaml --fresh   # deletes my_study/results first
 ```
 
-The example takes about 3.5 minutes on a workstation and about 7 minutes on a 4-core machine (GitHub's CI runner). Most of that time is the DRC: it simulates the whole network twice per step and per concentration.
+`check` reports every problem at once, each with its location in the file. `run` does the same checks first.
 
-To rebuild the README-style summary figures after a run:
-
-```bash
-python readme_figures.py
-```
-
-## 5. Outputs
-
-Everything is written under the repository root.
-
-| Folder or file | Contents |
+| Exit code | Meaning |
 | --- | --- |
-| `G_values_of_compounds/` | Gibbs energy of every species at each T and P (kcal mol<sup>-1</sup>) |
-| `G_values_of_reactions/` | `reactions.csv` with `Gdir` and `Ginv` filled in, at each T and P |
-| `compounds.csv` | The list of species |
-| `microkinetics_simulations/` | Raw COPASI time courses (concentrations, rates, fluxes), and the `df_flux_*`, `df_rate_*` and `df_drc_*` tables with every fitted E<sub>a</sub>, R<sup>2</sup> and DRC |
-| `microkinetics_simulations_images/` | All figures from `main.py`: Arrhenius plots of every step with R<sup>2</sup> > 0.9, E<sub>a</sub> of the product-forming steps and of product formation, DRC of every step, catalyst distribution, concentration profiles and conversion time |
-| `pics/*.png` | The summary figures from `readme_figures.py` |
+| 0 | Success |
+| 1 | Invalid study, or `results/` made from a different version of the study |
+| 2 | Failure during the run (thermochange, COPASI) |
 
-## 6. Re-running after you change something
+The hydroformylation example takes about 3.5 minutes on a workstation and 7 minutes on a 4-core machine; most of it is the degree of rate control, which simulates the network twice per step and per concentration. `python main.py` is a shortcut for running it.
 
-MicroKatc saves every simulation and table, and reuses them when it finds them.
+**Re-running.** Results are saved and reused. `results/run_info.json` records a hash of the study file and of every energy input. If you edit either, the next `run` stops and asks you to use `--fresh`, so old results are never reused for a changed study. A run that was interrupted can simply be started again.
 
-- **Parameters in `main.py`:** the table file names include a hash of the parameters that shaped them, so a change triggers a recompute on its own.
-- **Inputs (`GaussOutputFiles/` or `reactions.csv`):** these are *not* part of any file name. Old Gibbs energies, simulations and tables would be reused silently. Delete the generated results first:
+**One study per process.** If you drive MicroKatc from your own Python script, run each study in its own process (for example `subprocess.run([sys.executable, "microkatc.py", "run", path])`): COPASI resolves relative output paths against the first folder it used in a process.
 
-```bash
-rm -rf G_values_of_compounds G_values_of_reactions compounds.csv microkinetics_simulations microkinetics_simulations_images
-```
+## 4. Outputs
 
-## 7. Troubleshooting
+Everything goes to `results/` next to the study file.
+
+| Path | Contents |
+| --- | --- |
+| `run_info.json` | Study and input hashes, MicroKatc and thermochange commits, package versions, start time and duration |
+| `G_values_of_compounds/` | Gibbs energy of every species at each temperature (kcal mol<sup>-1</sup>) |
+| `G_values_of_reactions/` | Forward and reverse barrier of every step at each temperature |
+| `microkinetics_simulations/` | Raw COPASI time courses, and the `df_flux_*`, `df_rate_*` and `df_drc_*` tables with every fitted E<sub>a</sub>, R<sup>2</sup> and DRC |
+| `microkinetics_simulations_images/` | Arrhenius plots (R<sup>2</sup> > 0.9), E<sub>a</sub> of the product-forming steps and of product formation, DRC of every step, catalyst distribution, concentration profiles and conversion time |
+| `microkinetics.json` | Catalyst amount per cycle at the snapshot time and time to the conversion threshold, per studied concentration |
+| `model.cps` | The COPASI model of the last simulation |
+
+## 5. Troubleshooting
+
+Problems in the study file are reported before anything runs. Examples:
+
+| Message | Fix |
+| --- | --- |
+| `conditions.temprature_K: unknown key; did you mean temperature_K?` | Fix the spelling. |
+| `steps[4] "I4_0L + CO I5_0L": no <=> between the two sides` | Write the step as `A + B <=> C`. |
+| `no energy for TS3_0L: GaussOutputFiles/TS3_0L.out not found` | Add the file, or fix the name in the step. |
+| `species.energies_kcal_mol.TS1_0L: needs values at 325, 337.5, 362.5, 375 K for activation_energy` | Give one value per temperature, or drop the activation-energy analysis. |
+| `analyses.microkinetics.initial_M.PMe3: the studied species is set by conditions.studied_range_M` | Remove it from `initial_M`. |
+| `analyses.activation_energy.sampling_time_h: 3 h is after the end of the simulation (10000 s = 2.8 h)` | Sample earlier or simulate longer. |
+| `$thermochange is not set: export thermochange=/path/to/thermochange` | Export the variable. |
+
+Warnings do not stop the run: species in no cycle (not counted in the catalyst distribution), negative barriers, and the overall ΔG from your energies (−25.9 kcal mol<sup>-1</sup> for the example, the paper's value), printed as a check.
+
+During a run:
 
 | Message | Cause and fix |
 | --- | --- |
-| `get_G_compounds.sh did not create .../G_values_...csv. Is $thermochange exported, and does every species ...` | The Gibbs-energy step failed; the script's own output follows the message. `KeyError: 'TS3_0L'` there means that species or transition state has no `TS3_0L.out` in `GaussOutputFiles/` (check the spelling). Otherwise, `export thermochange=/path/to/thermochange`, and check that every `.out` file comes from a frequency calculation. |
-| `... couldn't converge to a solution. Resimulating...` | COPASI stopped before the end of the simulation; MicroKatc retries up to 5 times. |
-| `ConvergenceError: Solution can't be found for ...` | All retries failed. Try a shorter `total_simulation_time_*` or less extreme concentrations. |
-| `C(...) = ...M couldn't reach the threshold ...` | The product never reached `percentage_of_convertion` of the maximum yield in the simulated time; that point is left out of the conversion-time figure. Increase `total_simulation_time_microkinetics`. |
+| `thermochange gave a corrected G of 0.0 hartree for ...` | thermochange's own Python step failed, usually because `numpy` or `scipy` is missing in the Python it uses. Its error output follows the message. |
+| `... couldn't converge to a solution. Resimulating...` | COPASI stopped early; MicroKatc retries up to 5 times. |
+| `ConvergenceError: Solution can't be found for ...` | All retries failed: shorten the simulation or use less extreme concentrations. |
+| `C(...) = ...M couldn't reach the threshold ...` | The product never reached the conversion threshold in the simulated time; that point is left out of the conversion-time figure. Simulate longer. |
 | `Skipping Ea fit of ...: sign changes across the temperature range` | That step's net flux changes direction between temperatures, so it has no meaningful Arrhenius slope. Expected for near-equilibrium steps. |
-| `ValueError: COPASI returned N '.Flux' columns (or DRC coefficients) but reactions.csv has M reactions` | The saved results and `reactions.csv` disagree; delete the generated results (section 6) and run again. |
 
-Run the test suite with `for t in tests/test_*.py; do python "$t"; done`. `tests/test_paper_barriers.py` needs `$thermochange`, and it is skipped without it.
+Run the test suite with `for t in tests/test_*.py; do python "$t"; done`. `tests/test_paper_barriers.py` needs `$thermochange` and is skipped without it.

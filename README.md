@@ -40,8 +40,9 @@ The approach is published in:
 
 | Module | Role |
 | --- | --- |
-| [`main.py`](main.py) | Entry point; all analysis parameters are set here |
-| [`get_G_compounds.sh`](get_G_compounds.sh), [`calculating_G_for_microkinetics.py`](calculating_G_for_microkinetics.py) | Thermochemistry: G of each species and the forward/reverse barrier of each step |
+| [`microkatc.py`](microkatc.py) | The command: `run` and `check` a study file |
+| [`study.py`](study.py), [`steps.py`](steps.py), [`study_yaml.py`](study_yaml.py) | Read and check the study file |
+| [`thermochemistry.py`](thermochemistry.py), [`calculating_G_for_microkinetics.py`](calculating_G_for_microkinetics.py) | G of each species (thermochange or typed) and the forward/reverse barrier of each step |
 | [`microkinetics_simulation.py`](microkinetics_simulation.py) | COPASI simulations with convergence checks and caching; catalyst and conversion analyses |
 | [`apparent_activation_energy.py`](apparent_activation_energy.py) | Apparent E<sub>a</sub> fits and DRC calculation |
 | [`plotting_functions.py`](plotting_functions.py) | All figures |
@@ -60,7 +61,7 @@ The example data in this repository model the hydroformylation of ethene by a ho
 - The rate-determining step moves with the conditions: I8_0L ⇌ I9_0L controls the rate at low PMe<sub>3</sub>, and I3_1L ⇌ I4_1L takes over at high PMe<sub>3</sub>. The negative DRC of I3_0L ⇌ I4_0L shows that this step inhibits the 0L cycle.
 - More PMe<sub>3</sub> also releases more CO, which poisons the catalyst at the I6 ⇌ I7 steps. This is why the E<sub>a</sub> of the rate-determining steps rises and then plateaus.
 
-All figures below are built by [`readme_figures.py`](readme_figures.py) from the results `main.py` saves. Blue is the 0L cycle, pink the 1L cycle and green the product. `main.py` also writes the full versions, for every step and every concentration, to `microkinetics_simulations_images/`.
+All figures below are built by [`readme_figures.py`](readme_figures.py) from the results of the example study. Blue is the 0L cycle, pink the 1L cycle and green the product. Every run also writes the full versions, for every step and every concentration, to `results/microkinetics_simulations_images/`.
 
 ### 1. Arrhenius check
 
@@ -68,7 +69,7 @@ All figures below are built by [`readme_figures.py`](readme_figures.py) from the
   <img width="100%" alt="ln(r) against 1000/T for the rate-determining step and product formation, in the 0L and 1L regimes" src="pics/arrhenius.png"/>
 </p>
 
-The apparent E<sub>a</sub> comes from the slope of ln(r) against 1/T over 325–375 K, which is valid at low catalyst concentration. In each regime, product formation follows the same straight line as its rate-determining step, so the two share one E<sub>a</sub>. `main.py` draws this plot for every step and keeps those with R<sup>2</sup> > 0.9.
+The apparent E<sub>a</sub> comes from the slope of ln(r) against 1/T over 325–375 K, which is valid at low catalyst concentration. In each regime, product formation follows the same straight line as its rate-determining step, so the two share one E<sub>a</sub>. Every run draws this plot for every step and keeps those with R<sup>2</sup> > 0.9.
 
 ### 2. Apparent activation energy
 
@@ -120,7 +121,7 @@ Why does the E<sub>a</sub> of the 1L rate-determining step increase (figure 2) e
 
 ## Reproducing the paper
 
-With the settings in `main.py`, a full run takes a few minutes and reproduces the published results:
+Running [`examples/hydroformylation/study.yaml`](examples/hydroformylation/study.yaml) takes a few minutes and reproduces the published results:
 
 | Published result | Paper | This code |
 | --- | --- | --- |
@@ -129,7 +130,7 @@ With the settings in `main.py`, a full run takes a few minutes and reproduces th
 | Apparent E<sub>a</sub> of product formation (Figure 6) | 23.5 → 21.4 → 22.1 kcal mol<sup>-1</sup> | 23.5 → 21.5 → 22.1 kcal mol<sup>-1</sup> |
 | Minimum DRC of I3_0L ⇌ I4_0L (Figure 5) | −0.22 at 3 × 10<sup>-4</sup> M | −0.22 at 3 × 10<sup>-4</sup> M |
 
-[`tests/test_paper_barriers.py`](tests/test_paper_barriers.py) checks the barriers against SI Table S3 on every run with thermochange installed.
+[`tests/test_paper_barriers.py`](tests/test_paper_barriers.py) checks the barriers against SI Table S3 on every pull request, and a nightly run checks the full results against the paper.
 
 ## Quick start
 
@@ -140,10 +141,10 @@ cd MicroKatc
 python3.10 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt                          # includes COPASI's Python bindings and copasi_helper
 export thermochange=/path/to/thermochange
-python main.py                                           # runs the hydroformylation example of the paper
+python microkatc.py run examples/hydroformylation/study.yaml   # the paper's example
 ```
 
-**To study your own reaction,** see the **[usage guide](docs/USAGE.md)**. It covers the input files and naming rules, every parameter in `main.py`, the outputs, re-running after a change, and troubleshooting.
+**To study your own reaction,** describe it in one YAML study file: the steps (`A + B <=> C via TS`), where the energies come from (Gaussian output files or typed Gibbs energies), the conditions and the analyses. Then run `python microkatc.py run my_study.yaml`. The **[usage guide](docs/USAGE.md)** covers every key, both [examples](examples/), the outputs and troubleshooting.
 
 ## Modelling assumptions
 
