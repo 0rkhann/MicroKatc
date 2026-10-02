@@ -22,14 +22,14 @@ class AuxiliaryFunctions:
         cycles_intermediates_dict = {}
 
         for cycle in cycles:
-            # Regex pattern for intermediates (I1_0L, I5_1L...)
-            pattern = re.compile(rf"I[\d]+_{cycle}")
+            # Regex pattern for intermediates (I1_0L, I5_1L, I2c_1L, I9t_1L...)
+            pattern = re.compile(rf"I\d+[a-z]*_{cycle}")
 
             # Find intermediates matching the pattern for the current cycle
             intermediates = [
                 intermediate
                 for intermediate in compounds
-                if pattern.match(intermediate)
+                if pattern.fullmatch(intermediate)
             ]
             cycles_intermediates_dict[cycle] = intermediates
 
