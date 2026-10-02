@@ -19,6 +19,12 @@ class PlotFunctions:
         os.makedirs(IMAGES_SIMULATIONS_OUTPUT_DIR_NAME, exist_ok=True)
 
     @staticmethod
+    def grid(panels, max_columns=5):
+        """(nrows, ncols) for a figure with the given number of panels"""
+        ncols = max(1, min(max_columns, panels))
+        return -(-max(panels, 1) // ncols), ncols
+
+    @staticmethod
     def hide_unused_subplots(fig, axes):
         """Hides any unused subplots (if any)"""
         for j in range(len(axes)):

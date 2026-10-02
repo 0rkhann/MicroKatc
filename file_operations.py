@@ -2,7 +2,10 @@
 
 import os
 
-CURRENT_DIRECTORY = os.getcwd()
+
+def run_directory():
+    """Folder all results are written to: the current folder (microkatc.py runs inside results/)"""
+    return os.getcwd()
 
 
 class FileOperations:
@@ -11,8 +14,8 @@ class FileOperations:
     @staticmethod
     def move_to_output_directory(output_dir_name, file_name):
         """Moves a file to the specified directory"""
-        current_file_path = os.path.join(CURRENT_DIRECTORY, file_name)
-        desired_file_path = os.path.join(CURRENT_DIRECTORY, output_dir_name, file_name)
+        current_file_path = os.path.join(run_directory(), file_name)
+        desired_file_path = os.path.join(run_directory(), output_dir_name, file_name)
 
         os.makedirs(os.path.dirname(desired_file_path), exist_ok=True)
 

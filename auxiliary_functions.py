@@ -12,7 +12,7 @@ from calculating_G_for_microkinetics import (
     G_COMPOUNDS_OUTPUT_DIR_NAME,
     REACTION_DF_OUTPUT_DIR_NAME,
 )
-from file_operations import CURRENT_DIRECTORY
+from file_operations import run_directory
 
 R_L_atm_per_mol_K = 0.082057366080960
 
@@ -92,17 +92,19 @@ class AuxiliaryFunctions:
         simulation_dfs,
         reactant_concentration_array,
         reactant_to_study,
-        product_conversion_threshold_concentration,
+        thresholds,
+        product="prod",
     ):
-        """Returns the first times when concentration of a product is greater than a product concentration threshold"""
+        """First time each simulation's product concentration exceeds its threshold (one per simulation)"""
         times_conv_reac_conc = []
 
         for i, simulation_df in enumerate(simulation_dfs):
             try:
                 # Find the first time value when concentration of a product is greater than a set product concentration threshold
-                filtered_df = simulation_df.query(
-                    "prod > @product_conversion_threshold_concentration"
-                )
+                product_conversion_threshold_concentration = thresholds[i]
+                filtered_df = simulation_df[
+                    simulation_df[product] > product_conversion_threshold_concentration
+                ]
 
                 # First time at when product reach the product conversion threshold concentration
                 first_convergence_time = filtered_df.iloc[0]["time"]
@@ -133,17 +135,17 @@ class AuxiliaryFunctions:
         G_compounds_file_name = f"G_values_at_{temperature}K_{pressure:.5e}atm.csv"
 
         G_compounds_file_path = os.path.join(
-            CURRENT_DIRECTORY, G_COMPOUNDS_OUTPUT_DIR_NAME, G_compounds_file_name
+            run_directory(), G_COMPOUNDS_OUTPUT_DIR_NAME, G_compounds_file_name
         )
         reaction_df_file_path = os.path.join(
-            CURRENT_DIRECTORY, REACTION_DF_OUTPUT_DIR_NAME, reaction_df_file_name
+            run_directory(), REACTION_DF_OUTPUT_DIR_NAME, reaction_df_file_name
         )
         outputs = [G_compounds_file_path, reaction_df_file_path]
 
         # Calculations will be executed if either file for the specified T and P is missing
         if not all(os.path.exists(path) for path in outputs):
             # Path to the Bash script
-            script_path = os.path.join(CURRENT_DIRECTORY, "get_G_compounds.sh")
+            script_path = os.path.join(run_directory(), "get_G_compounds.sh")
             print(f"Creating and saving: {reaction_df_file_name}")
             print(f"Creating and saving: {G_compounds_file_name}")
             result = subprocess.run(

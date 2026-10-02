@@ -5,7 +5,7 @@ import os
 import pandas as pd
 
 from bash_parsing import BashParser
-from file_operations import CURRENT_DIRECTORY, FileOperations
+from file_operations import FileOperations, run_directory
 
 DIFFUSION_BARRIER = 4
 G_COMPOUNDS_OUTPUT_DIR_NAME = "G_values_of_compounds"
@@ -108,7 +108,7 @@ class CompoundsDataHandler:
 
     def create_compounds_df(self, compounds):
         """Creates and saves dataframe with compounds in the system if it doesn't exist"""
-        compounds_df_path = os.path.join(CURRENT_DIRECTORY, self.df_compounds_file_name)
+        compounds_df_path = os.path.join(run_directory(), self.df_compounds_file_name)
         if not os.path.exists(compounds_df_path):
             print("Creating compounds.csv file...")
             compounds.to_csv(f"{self.df_compounds_file_name}", index=False)

@@ -56,6 +56,12 @@ def main():
     # Specify time step for the microkinetics simulations
     time_step = 1
 
+    # Barrier tables for every temperature, before any simulation (the analyses no longer compute them)
+    for T_value in sorted({*T_values_array_Ea, temperature_value}):
+        AuxiliaryFunctions.calculate_G_values(
+            T_value, AuxiliaryFunctions.compute_pressure_value(T_value)
+        )
+
     # Perform MicroKinetics Analysis
     analysis1 = ApparentEaAnalysis(
         temperature_value,
@@ -179,8 +185,8 @@ def main():
         reactant_concentration_array,
         reactant_to_study,
         c0_2,
-        cycles,
-        main_reactants,
+        AuxiliaryFunctions.find_intermediates_of_cycle(cycles),
+        [min(c0_2[r] for r in main_reactants)] * len(reactant_concentration_array),
         compounds_to_plot,
         catalyst_concentration_time,
         percentage_of_convertion,

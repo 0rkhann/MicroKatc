@@ -10,7 +10,7 @@ from scipy.constants import R
 
 from auxiliary_functions import AuxiliaryFunctions
 from calculating_G_for_microkinetics import REACTION_DF_OUTPUT_DIR_NAME
-from file_operations import CURRENT_DIRECTORY, FileOperations
+from file_operations import FileOperations, run_directory
 from microkinetics_simulation import SIMULATIONS_OUTPUT_DIR_NAME, SimulationHandler
 from plotting_functions import PlotFunctions
 
@@ -40,8 +40,8 @@ class ReactionDataHandler:
             c0_copy[reactant_to_study] = initial_concentration
 
             for T_value in T_values_array:
+                # The barrier tables are written beforehand (thermochemistry.write_barrier_tables)
                 pressure_value = AuxiliaryFunctions.compute_pressure_value(T_value)
-                AuxiliaryFunctions.calculate_G_values(T_value, pressure_value)
 
                 simulation_calculator = SimulationHandler(
                     T_value,
@@ -256,7 +256,7 @@ class ApparentEaAnalysis:
 
         try:
             df_flux_path = os.path.join(
-                CURRENT_DIRECTORY, SIMULATIONS_OUTPUT_DIR_NAME, self.df_flux_filename
+                run_directory(), SIMULATIONS_OUTPUT_DIR_NAME, self.df_flux_filename
             )
             self._df_flux = pd.read_csv(df_flux_path)
             print(
@@ -268,7 +268,7 @@ class ApparentEaAnalysis:
 
         try:
             df_rate_path = os.path.join(
-                CURRENT_DIRECTORY, SIMULATIONS_OUTPUT_DIR_NAME, self.df_rate_filename
+                run_directory(), SIMULATIONS_OUTPUT_DIR_NAME, self.df_rate_filename
             )
             self._df_rate = pd.read_csv(df_rate_path)
             print(
@@ -401,6 +401,8 @@ class DRCAnalysis:
         reactions,
         e_shift,
         cores=1,
+        product="prod",
+        time_step=1,
     ):
         self.reactant_concentration_array = reactant_concentration_array
         self.T_values_array = T_values_array
@@ -410,6 +412,8 @@ class DRCAnalysis:
         self.reactions = reactions
         self.e_shift = e_shift
         self.cores = cores
+        self.product = product
+        self.time_step = time_step
 
         self.plot_function = PlotFunctions()
 
@@ -422,12 +426,14 @@ class DRCAnalysis:
             self.reactions,
             self.e_shift,
             "central difference",
+            self.product,
+            self.time_step,
         )
         self.df_drc_filename = f"df_drc_T_range_{self.T_values_array[0]}K_{self.T_values_array[-1]}K_C({self.reactant_to_study})_{self.reactant_concentration_array[0]}M_{self.reactant_concentration_array[-1]}M_{inputs_hash}.csv"
 
         try:
             df_drc_path = os.path.join(
-                CURRENT_DIRECTORY, SIMULATIONS_OUTPUT_DIR_NAME, self.df_drc_filename
+                run_directory(), SIMULATIONS_OUTPUT_DIR_NAME, self.df_drc_filename
             )
             self._df_drc = pd.read_csv(df_drc_path)
             print(
@@ -457,7 +463,7 @@ class DRCAnalysis:
         for T_value in self.T_values_array:
             pressure_value = AuxiliaryFunctions.compute_pressure_value(T_value)
             datafile = os.path.join(
-                CURRENT_DIRECTORY,
+                run_directory(),
                 REACTION_DF_OUTPUT_DIR_NAME,
                 f"reaction_df_{T_value}K_{pressure_value:.5e}atm.csv",
             )
@@ -515,9 +521,9 @@ class DRCAnalysis:
             temp=T_value,
             c0=c0,
             total_time=self.total_simulation_time,
-            time_step=1,
+            time_step=self.time_step,
             target_time=self.total_simulation_time / 2,
-            target_spc="prod",
+            target_spc=self.product,
             e_shift=shift,
             cores=self.cores,
         )
