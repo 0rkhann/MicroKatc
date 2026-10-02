@@ -133,37 +133,17 @@ With the settings in `main.py`, a full run takes a few minutes and reproduces th
 
 ## Quick start
 
-### 1. Install dependencies
-
-MicroKatc relies on two packages by D. Garay-Ruiz:
-
 ```bash
-git clone https://gitlab.com/dgarayr/thermochange.git    # thermochemical corrections
-git clone https://gitlab.com/dgarayr/copasi_helper.git   # COPASI model building and simulation
+git clone https://gitlab.com/dgarayr/thermochange.git   # thermochemical corrections, by D. Garay-Ruiz
 git clone https://github.com/0rkhann/MicroKatc.git
-```
-
-Then, inside a Python 3.10 virtual environment, install the Python requirements. They include the COPASI Python bindings (`python-copasi`) and the pinned copasi_helper commit:
-
-```bash
 cd MicroKatc
 python3.10 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.txt                          # includes COPASI's Python bindings and copasi_helper
+export thermochange=/path/to/thermochange
+python main.py                                           # runs the hydroformylation example of the paper
 ```
 
-### 2. Prepare inputs
-
-1. Put the Gaussian `.out` file of every species and transition state in `GaussOutputFiles/`.
-2. List the elementary steps in `reactions.csv`, one per row, with the transition state in the `TS` column. Use `-` for a barrierless step. See the provided example.
-
-### 3. Run
-
-```bash
-export thermochange=/path/to/thermochange   # must be exported so get_G_compounds.sh can see it
-python3 main.py
-```
-
-Every analysis parameter (temperatures, concentration ranges, simulation times, the reactant to study, the number of cores for DRC) is set and commented in [`main.py`](main.py).
+**To study your own reaction,** see the **[usage guide](docs/USAGE.md)**. It covers the input files and naming rules, every parameter in `main.py`, the outputs, re-running after a change, and troubleshooting.
 
 ## Modelling assumptions
 
