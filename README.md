@@ -8,11 +8,9 @@
   <img alt="Python 3" src="https://img.shields.io/badge/python-3-3776AB?logo=python&logoColor=white"/>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-green"/></a>
   <br/><br/>
-  <img width="600" alt="MicroKatc logo" src="pics/logo.png"/>
-  <br/><br/>
-  <a href="https://doi.org/10.1021/acscatal.5c00348"><img width="560" alt="TOC graphic: microkinetic modelling of ligand exchange between catalytic cycles X and Y, giving activation energy, resting state and catalyst speciation" src="pics/toc_graphic.jpg"/></a>
+  <a href="https://doi.org/10.1021/acscatal.5c00348"><img width="640" alt="Graphical abstract: microkinetic modelling of ligand exchange between catalytic cycles X and Y, giving activation energy, resting state and catalyst speciation" src="pics/toc_graphic.jpg"/></a>
   <br/>
-  <sub>TOC graphic from Abdullayev et al., <i>ACS Catal.</i> 2025, 15, 4739, © 2025 the authors, published by ACS under <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">CC BY-NC-ND 4.0</a>.</sub>
+  <sub>Graphical abstract © 2025 the authors, <i>ACS Catal.</i> 15, 4739, <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">CC BY-NC-ND 4.0</a></sub>
 </p>
 
 MicroKatc turns a set of Gaussian calculations and a list of elementary steps into a complete kinetic picture of a catalytic system. It computes thermally corrected Gibbs energies, builds and runs COPASI microkinetic models, and then answers the questions a mechanistic study needs: **which steps control the rate, how the apparent activation energy responds to reaction conditions, and where the catalyst actually spends its time.**
@@ -32,17 +30,14 @@ The approach is published in:
 
 ## How it works
 
-```mermaid
-flowchart LR
-    A["Gaussian .out files"] --> B["thermochange<br/>G(T, P) of each species"]
-    C["reactions.csv<br/>elementary steps + TS"] --> D
-    B --> D["Forward / reverse<br/>Gibbs barriers"]
-    D --> E["COPASI model<br/>(copasi_helper)"]
-    E --> F["Time-course simulations<br/>over T and c0"]
-    F --> G["Apparent Ea"]
-    F --> H["Degree of rate control"]
-    F --> I["Catalyst distribution<br/>and conversion time"]
-```
+<p align="center">
+  <img width="480" alt="MicroKatc pipeline: 1 quantum mechanics, 2 statistical thermodynamics and thermochemical correction, 3 microkinetics with COPASI, 4 analysis of results" src="pics/pipeline.png"/>
+</p>
+
+1. **Quantum mechanics:** DFT calculations of every species and transition state (Gaussian `.out` files).
+2. **Thermochemistry:** thermochange corrects each Gibbs energy to the working temperature and a 1 M standard state; MicroKatc turns them into forward and reverse barriers for every step in `reactions.csv`.
+3. **Microkinetics:** copasi_helper builds a COPASI model, and MicroKatc runs time-course simulations over temperature and reactant concentration.
+4. **Analysis:** apparent activation energies, degree of rate control, catalyst distribution and conversion times.
 
 | Module | Role |
 | --- | --- |
