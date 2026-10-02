@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use MicroKatc, please cite the article below."
+title: MicroKatc
+abstract: >-
+  Microkinetic analysis of catalytic cycles (apparent activation energy,
+  degree of rate control, concentration evolution) built on DFT Gibbs
+  energies from Gaussian outputs.
+type: software
+authors:
+  - family-names: Abdullayev
+    given-names: Orkhan
+license: MIT
+repository-code: "https://github.com/0rkhann/MicroKatc"
+preferred-citation:
+  type: article
+  title: "Microkinetic Assessment of Ligand-Exchanging Catalytic Cycles"
+  authors:
+    - family-names: Abdullayev
+      given-names: Orkhan
+    - family-names: Garay-Ruiz
+      given-names: Diego
+    - family-names: Bori-Bru
+      given-names: B.
+    - family-names: Bo
+      given-names: Carles
+  journal: "ACS Catalysis"
+  year: 2025
+  volume: 15
+  issue: 6
+  start: 4739
+  end: 4745
+  doi: "10.1021/acscatal.5c00348"
