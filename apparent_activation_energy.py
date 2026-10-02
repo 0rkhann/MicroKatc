@@ -1,13 +1,15 @@
-from microkinetics_simulation import SimulationHandler, SIMULATIONS_OUTPUT_DIR_NAME
+import os
+
+import copasi_parser as cpx
 import numpy as np
 import pandas as pd
-from auxiliary_functions import AuxiliaryFunctions
-from plotting_functions import PlotFunctions
 from scipy.constants import R
-import copasi_parser as cpx
-import os
-from file_operations import CURRENT_DIRECTORY, FileOperations
+
+from auxiliary_functions import AuxiliaryFunctions
 from calculating_G_for_microkinetics import REACTION_DF_OUTPUT_DIR_NAME
+from file_operations import CURRENT_DIRECTORY, FileOperations
+from microkinetics_simulation import SIMULATIONS_OUTPUT_DIR_NAME, SimulationHandler
+from plotting_functions import PlotFunctions
 
 J_TO_KCAL = 4184
 
@@ -101,7 +103,7 @@ class ReactionDataHandler:
                 f"c0({reactant_to_study})": initial_concentration,
                 "T": T_value,
                 "1/T": 1 / T_value,
-                f"ln_value": log_value,
+                "ln_value": log_value,
             }
             collected_data.append(data_entry)
 
@@ -216,7 +218,7 @@ class ApparentEaAnalysis:
                 f"Reading existing flux dataframe with provided T range {self.T_values_array[:: len(self.T_values_array) - 1]} and reactant "
                 f"({self.reactant_to_study}) concentration range {self.reactant_concentration_array[:: len(self.reactant_concentration_array) - 1]}..."
             )
-        except:
+        except Exception:
             self._df_flux = None
 
         try:
@@ -228,7 +230,7 @@ class ApparentEaAnalysis:
                 f"Reading existing rate dataframe with provided T range {self.T_values_array[:: len(self.T_values_array) - 1]} and reactant "
                 f"({self.reactant_to_study}) concentration range {self.reactant_concentration_array[:: len(self.reactant_concentration_array) - 1]}..."
             )
-        except:
+        except Exception:
             self._df_rate = None
 
     @property
@@ -369,7 +371,7 @@ class DRCAnalysis:
                 f"Reading existing drc dataframe with provided T range {self.T_values_array[:: len(self.T_values_array) - 1]} and reactant "
                 f"({self.reactant_to_study}) concentration range {self.reactant_concentration_array[:: len(self.reactant_concentration_array) - 1]}..."
             )
-        except:
+        except Exception:
             self._df_drc = None
 
     @property

@@ -1,8 +1,10 @@
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
 import os
+
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sns
+
 from file_operations import FileOperations
 
 IMAGES_SIMULATIONS_OUTPUT_DIR_NAME = "microkinetics_simulations_images"
@@ -41,7 +43,7 @@ class PlotFunctions:
                     x=reactant_concentrations,
                     y=catalyst_concentrations_per_cycle[i],
                     xlabel=f"C({reactant_to_study}) (M)",
-                    ylabel=f"C(Catalyst) (M)",
+                    ylabel="C(Catalyst) (M)",
                     title=f"C(catalyst) in different cycles vs. C({reactant_to_study})",
                     ax=ax,
                     legend=f"Catalyst in {cycle} cycle",
@@ -69,7 +71,7 @@ class PlotFunctions:
                 x=reactant_concentrations,
                 y=times_of_product_conversion,
                 xlabel=f"C({reactant_to_study}) (M)",
-                ylabel=f"Time of product conversion",
+                ylabel="Time of product conversion",
                 title=f"Time of product conversion vs. C({reactant_to_study})",
                 ax=ax,
             )
@@ -208,7 +210,7 @@ class PlotFunctions:
         y_values = np.asarray(y_values, dtype=float)
 
         if slope == None:
-            slope, intercept = slope, intercept = np.polyfit(x_values, y_values, 1)
+            slope, intercept = np.polyfit(x_values, y_values, 1)
 
         trend_line = slope * x_values + intercept
         return trend_line

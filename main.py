@@ -1,8 +1,9 @@
-from auxiliary_functions import AuxiliaryFunctions
-import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+
 from apparent_activation_energy import ApparentEaAnalysis, DRCAnalysis
+from auxiliary_functions import AuxiliaryFunctions
 from microkinetics_simulation import MicroKinetics
 
 
