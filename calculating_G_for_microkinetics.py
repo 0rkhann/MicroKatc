@@ -1,7 +1,9 @@
 import os
+
 import pandas as pd
-from file_operations import FileOperations, CURRENT_DIRECTORY
+
 from bash_parsing import BashParser
+from file_operations import CURRENT_DIRECTORY, FileOperations
 
 DIFFUSION_BARRIER = 4
 G_COMPOUNDS_OUTPUT_DIR_NAME = "G_values_of_compounds"

@@ -1,0 +1,7 @@
+# Lint and format settings for `ruff check` and `ruff format`.
+
+[lint]
+# The broad `except Exception` blocks are intentional fallbacks: an unreadable
+# cached CSV is recomputed, and a simulation that never reaches the product
+# threshold is skipped from the plot.
+ignore = ["BLE001"]

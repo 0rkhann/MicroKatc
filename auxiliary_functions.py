@@ -1,9 +1,11 @@
-import pandas as pd
-import re
 import os
-from file_operations import CURRENT_DIRECTORY
-from calculating_G_for_microkinetics import G_COMPOUNDS_OUTPUT_DIR_NAME
+import re
 import subprocess
+
+import pandas as pd
+
+from calculating_G_for_microkinetics import G_COMPOUNDS_OUTPUT_DIR_NAME
+from file_operations import CURRENT_DIRECTORY
 
 R_L_atm_per_mol_K = 0.082057366080960
 
@@ -17,7 +19,7 @@ class AuxiliaryFunctions:
 
         for cycle in cycles:
             # Regex pattern for intermediates (I1_0L, I5_1L...)
-            pattern = re.compile(f"I[\d]+_{cycle}")
+            pattern = re.compile(rf"I[\d]+_{cycle}")
 
             # Find intermediates matching the pattern for the current cycle
             intermediates = [
@@ -91,7 +93,7 @@ class AuxiliaryFunctions:
                     (first_convergence_time, reactant_concentration_array[i])
                 )
 
-            except:
+            except Exception:
                 print(
                     f"C({reactant_to_study}) = {reactant_concentration_array[i]}M couldn't reach the threshold of {product_conversion_threshold_concentration}M in the specified simulation time. It won't be included to the graph"
                 )
@@ -125,6 +127,7 @@ class AuxiliaryFunctions:
                 ["bash", script_path, f"{temperature}", f"{pressure}"],
                 capture_output=True,
                 text=True,
+                check=False,
             )
 
     @staticmethod

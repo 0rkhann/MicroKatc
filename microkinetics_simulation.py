@@ -1,10 +1,12 @@
-import copasi_parser as cpx
-from plotting_functions import PlotFunctions
-from auxiliary_functions import AuxiliaryFunctions
-from file_operations import FileOperations, CURRENT_DIRECTORY
-from calculating_G_for_microkinetics import REACTION_DF_OUTPUT_DIR_NAME
 import os
 from collections.abc import Iterable
+
+import copasi_parser as cpx
+
+from auxiliary_functions import AuxiliaryFunctions
+from calculating_G_for_microkinetics import REACTION_DF_OUTPUT_DIR_NAME
+from file_operations import CURRENT_DIRECTORY, FileOperations
+from plotting_functions import PlotFunctions
 
 CONVERT_SECONDS_TO_HOURS = 1 / 3600
 SIMULATIONS_OUTPUT_DIR_NAME = "microkinetics_simulations"
@@ -31,7 +33,7 @@ class SimulationHandler:
             initial_concentrations=c0,
             csv_delim=",",
         )
-        traj_task, result_flag = cpx.time_course_simulation(
+        _traj_task, _result_flag = cpx.time_course_simulation(
             ch,
             total_time=self.total_simulation_time,
             time_step=self.time_step,
@@ -171,7 +173,7 @@ class MicroKinetics:
 
         for temperature in temperatures:
             fig_name = f"C(compounds)_C({self.reactant_to_study})_{temperature}K_{self.pressure_value:.5e}atm_{self.compounds_to_plot}.svg"
-            fig = self.plot_functions.plot_concentrations_evolution(
+            self.plot_functions.plot_concentrations_evolution(
                 self.reactant_to_study,
                 self.simulations_dfs,
                 self.reactant_concentration_array,
@@ -199,16 +201,14 @@ class MicroKinetics:
             )
         )
 
-        fig = (
-            self.plot_functions.plot_concentration_of_catalyst_versus_studied_reactant(
-                self.reactant_concentration_array,
-                catalyst_concentrations_per_cycle,
-                self.cycles,
-                self.reactant_to_study,
-                figsize,
-                fig_name,
-                log_x,
-            )
+        self.plot_functions.plot_concentration_of_catalyst_versus_studied_reactant(
+            self.reactant_concentration_array,
+            catalyst_concentrations_per_cycle,
+            self.cycles,
+            self.reactant_to_study,
+            figsize,
+            fig_name,
+            log_x,
         )
         self.plot_functions.save_figure(fig_name)
 
@@ -228,7 +228,7 @@ class MicroKinetics:
             product_conversion_threshold_concentration,
         )
 
-        fig = self.plot_functions.plot_reactant_concentration_vs_product_conversion(
+        self.plot_functions.plot_reactant_concentration_vs_product_conversion(
             times_conv_reac_conc, self.reactant_to_study, figsize, fig_name, log_x
         )
         self.plot_functions.save_figure(fig_name)
