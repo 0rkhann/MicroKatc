@@ -1,3 +1,5 @@
+"""Helper functions shared by the analyses (cycle intermediates, catalyst concentrations, G values, pressure)"""
+
 import os
 import re
 import subprocess
@@ -11,6 +13,8 @@ R_L_atm_per_mol_K = 0.082057366080960
 
 
 class AuxiliaryFunctions:
+    """Collection of static helper functions used across the analyses"""
+
     @staticmethod
     def find_intermediates_of_cycle(cycles):
         """Returns intermediates belonging to a corresponding cycle as a dictionary"""
@@ -103,7 +107,7 @@ class AuxiliaryFunctions:
 
     @staticmethod
     def reactions_number(reaction_df):
-        """Returns reactions as a list and number of reactions"""
+        """Returns the reactions of the "Rx" column as a list"""
         reactions = reaction_df["Rx"].to_list()
         return reactions
 

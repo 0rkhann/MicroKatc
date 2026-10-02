@@ -1,9 +1,13 @@
+"""File helpers for moving generated outputs into result directories"""
+
 import os
 
 CURRENT_DIRECTORY = os.getcwd()
 
 
 class FileOperations:
+    """Moves generated files into output directories under the working directory"""
+
     @staticmethod
     def move_to_output_directory(output_dir_name, file_name):
         """Moves a file to the specified directory"""

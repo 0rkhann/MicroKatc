@@ -1,3 +1,5 @@
+"""Computes Gibbs energies of compounds and of direct/inverse reactions from thermochange output (called by get_G_compounds.sh)"""
+
 import os
 
 import pandas as pd
@@ -11,6 +13,8 @@ REACTION_DF_OUTPUT_DIR_NAME = "G_values_of_reactions"
 
 
 class TemperaturePressureParser:
+    """Reads temperature and pressure from the command line"""
+
     @staticmethod
     def get_temperature_pressure():
         """Fetch temperature and pressure values from bash input"""
@@ -18,6 +22,8 @@ class TemperaturePressureParser:
 
 
 class ReactionFileParser:
+    """Reads reactions.csv and splits reaction strings into reactants and products"""
+
     def __init__(self, reaction_file="reactions.csv"):
         self.reactions_df = pd.read_csv(reaction_file, sep=",")
 
@@ -31,6 +37,8 @@ class ReactionFileParser:
 
 
 class GibbsEnergyCalculator:
+    """Computes Gibbs energies (kcal/mol) of transition states and of direct/inverse reactions"""
+
     def __init__(self, compound_energy_dataframe):
         self.compound_energy_dataframe = compound_energy_dataframe
 
@@ -93,6 +101,8 @@ class GibbsEnergyCalculator:
 
 
 class CompoundsDataHandler:
+    """Writes compounds.csv and the compound G values for a given T and P"""
+
     def __init__(self, df_compounds_file_name="compounds.csv"):
         self.df_compounds_file_name = df_compounds_file_name
 
@@ -113,6 +123,8 @@ class CompoundsDataHandler:
 
 
 class ReactionDataHandler:
+    """Writes the reaction dataframe with Gdir and Ginv for a given T and P"""
+
     def save_reaction_data(self, reactions_df, reaction_df_file_name):
         """Saves reaction data to CSV and move to the appropriate directory"""
         os.makedirs(REACTION_DF_OUTPUT_DIR_NAME, exist_ok=True)
@@ -123,6 +135,8 @@ class ReactionDataHandler:
 
 
 class ReactionCalculator:
+    """Runs the G calculation for the T and P given on the command line and saves the results"""
+
     def __init__(self, reaction_file="reactions.csv"):
         # Initialize parsers and handlers
         self.temperature, self.pressure = (

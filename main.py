@@ -1,3 +1,5 @@
+"""Entry point: apparent Ea, DRC and concentration evolution analyses of the cycle in reactions.csv"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -9,6 +11,7 @@ from microkinetics_simulation import MicroKinetics
 
 def main():
     # Load reaction data
+    """Runs the apparent Ea, DRC and microkinetics analyses with the parameters set below"""
     reaction_df = pd.read_csv("reactions.csv", sep=",")
     reactions = AuxiliaryFunctions.reactions_number(reaction_df)
 

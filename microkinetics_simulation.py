@@ -1,3 +1,5 @@
+"""COPASI time-course simulations via copasi_helper and concentration-based microkinetic analyses"""
+
 import os
 from collections.abc import Iterable
 
@@ -13,6 +15,8 @@ SIMULATIONS_OUTPUT_DIR_NAME = "microkinetics_simulations"
 
 
 class SimulationHandler:
+    """Runs, or reads cached, COPASI time-course simulations at a given T and P"""
+
     def __init__(self, T, P, reactant_to_study, total_simulation_time, time_step=1):
         self.temperature_value = T
         self.pressure_value = P
@@ -108,10 +112,12 @@ class SimulationHandler:
 
 
 class ConvergenceError(Exception):
-    pass
+    """Raised when COPASI does not reach the total simulation time after repeated attempts"""
 
 
 class MicroKinetics:
+    """Simulates the system over initial concentrations of the studied reactant and plots catalyst distribution, concentration evolution and product conversion time"""
+
     def __init__(
         self,
         temperature_value,
@@ -154,6 +160,7 @@ class MicroKinetics:
 
     @property
     def simulations_dfs(self):
+        """Returns simulation dataframes for each initial concentration of the studied reactant, computing them on first access"""
         if self._simulations_dfs is None:
             print("Starting computing simulation dataframes...")
             # List of simulation dataframes for different initial concentrations of reactant_to_study
@@ -168,6 +175,7 @@ class MicroKinetics:
     def plot_concentration_evolution(
         self, temperatures, log_y, log_x, nrows, ncols, figsize
     ):
+        """Plots and saves the concentration evolution of the selected compounds for each temperature"""
         if not isinstance(temperatures, Iterable):
             temperatures = [temperatures]
 
@@ -189,6 +197,7 @@ class MicroKinetics:
             self.plot_functions.save_figure(fig_name)
 
     def plot_catalyst_concentration_vs_reactant(self, log_x, figsize):
+        """Plots and saves catalyst concentration in each cycle vs. initial concentration of the studied reactant"""
         fig_name = f"C(catalyst)_C({self.reactant_to_study})_{self.temperature_value}K_{self.pressure_value:.5e}atm.svg"
         cycles_intermediates_dict = AuxiliaryFunctions.find_intermediates_of_cycle(
             self.cycles
@@ -213,6 +222,7 @@ class MicroKinetics:
         self.plot_functions.save_figure(fig_name)
 
     def plot_reactant_vs_product_conversion(self, log_x, figsize):
+        """Plots and saves the time to reach the product conversion threshold vs. initial concentration of the studied reactant"""
         fig_name = f"C({self.reactant_to_study})_total_t_product_conversion_{self.temperature_value}K_{self.pressure_value:.5e}atm.svg"
         product_conversion_threshold_concentration = (
             AuxiliaryFunctions.find_limiting_reactant_concentration(

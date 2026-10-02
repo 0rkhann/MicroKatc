@@ -1,3 +1,5 @@
+"""Parsing of the arguments and thermochange output passed in by get_G_compounds.sh"""
+
 import sys
 
 import pandas as pd
@@ -6,6 +8,8 @@ HARTREE_TO_KCAL_MOL = 627.509
 
 
 class BashParser:
+    """Reads temperature, pressure and Gibbs energies produced by get_G_compounds.sh"""
+
     @staticmethod
     def get_temperature_pressure_from_input():
         """Get temperature and pressure from sys.argv"""
