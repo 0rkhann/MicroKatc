@@ -421,6 +421,7 @@ class DRCAnalysis:
             self.total_simulation_time,
             self.reactions,
             self.e_shift,
+            "central difference",
         )
         self.df_drc_filename = f"df_drc_T_range_{self.T_values_array[0]}K_{self.T_values_array[-1]}K_C({self.reactant_to_study})_{self.reactant_concentration_array[0]}M_{self.reactant_concentration_array[-1]}M_{inputs_hash}.csv"
 
@@ -469,23 +470,16 @@ class DRCAnalysis:
                     f"Computing degree of rate control for {T_value}K, {pressure_value:.2e}atm, c({self.reactant_to_study}) = {initial_concentration}M..."
                 )
 
-                cpx_model = cpx.prepare_copasi_model(
-                    reactions_file=datafile,
-                    temp=T_value,
-                    initial_concentrations=c0_copy,
-                    csv_delim=",",
-                )
-
-                drc_coefficients, _ = cpx.drc_calc(
-                    base_model=cpx_model,
-                    temp=T_value,
-                    c0=c0_copy,
-                    total_time=self.total_simulation_time,
-                    time_step=1,
-                    target_time=self.total_simulation_time / 2,
-                    target_spc="prod",
-                    e_shift=self.e_shift,
-                    cores=self.cores,
+                # Central difference: average the DRCs from shifting every barrier up and down by
+                # e_shift. Their first-order errors cancel, and a larger shift keeps COPASI's
+                # integration noise (about 2e-4 relative in the rates) small next to the change it
+                # causes; a one-sided 0.01 kcal/mol shift turns that noise into DRC errors of ~0.01.
+                drc_coefficients = np.mean(
+                    [
+                        self._one_sided_drc(datafile, T_value, c0_copy, shift)
+                        for shift in (self.e_shift, -self.e_shift)
+                    ],
+                    axis=0,
                 )
 
                 # DRC coefficients are matched to reactions.csv rows by position
@@ -506,9 +500,29 @@ class DRCAnalysis:
                     }
                 )
 
-                cpx_model.self_destruct()
-
         return pd.DataFrame(data)
+
+    def _one_sided_drc(self, datafile, T_value, c0, shift):
+        """DRC coefficients from one finite-difference shift (kcal/mol) of every barrier, on a fresh model"""
+        cpx_model = cpx.prepare_copasi_model(
+            reactions_file=datafile,
+            temp=T_value,
+            initial_concentrations=c0,
+            csv_delim=",",
+        )
+        drc_coefficients, _ = cpx.drc_calc(
+            base_model=cpx_model,
+            temp=T_value,
+            c0=c0,
+            total_time=self.total_simulation_time,
+            time_step=1,
+            target_time=self.total_simulation_time / 2,
+            target_spc="prod",
+            e_shift=shift,
+            cores=self.cores,
+        )
+        cpx_model.self_destruct()
+        return np.asarray(drc_coefficients)
 
     def plot_drc_vs_c0(self, nrows, ncols, figsize, df_drc, temperature_value, log_x):
         """Plots and saves DRC coefficients of each step vs. initial concentration of the studied reactant"""
