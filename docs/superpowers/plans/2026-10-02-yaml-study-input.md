@@ -4008,7 +4008,7 @@ git commit -m "test: COPASI follows second-order kinetics and mass balance for 2
 
 - [ ] **Step 1: Replace `docs/USAGE.md`**
 
-```markdown
+````markdown
 # Using MicroKatc on your own system
 
 You describe a system in one **study file** (YAML) and run it with one command. Two complete examples ship with the repository:
@@ -4211,7 +4211,7 @@ During a run:
 | `Skipping Ea fit of ...: sign changes across the temperature range` | That step's net flux changes direction between temperatures, so it has no meaningful Arrhenius slope. Expected for near-equilibrium steps. |
 
 Run the test suite with `for t in tests/test_*.py; do python "$t"; done`. `tests/test_paper_barriers.py` needs `$thermochange` and is skipped without it.
-```
+````
 
 - [ ] **Step 2: Apply the README and CLAUDE.md patch**
 
