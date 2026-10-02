@@ -132,6 +132,13 @@ class ReactionParameterCalculator:
             else [key for key in df["name"].unique() if key.endswith(".Rate")]
         )
 
+        # Fluxes are matched to reactions.csv rows by position, so the counts must agree
+        if calculation_type == "ri" and len(keys) != len(reactions):
+            raise ValueError(
+                f"COPASI returned {len(keys)} '.Flux' columns but reactions.csv has "
+                f"{len(reactions)} reactions; cannot match fluxes to reactions"
+            )
+
         for reactant_c0 in reactant_concentration_array:
             for i, key in enumerate(keys):
                 # Dataframe with data of current flux (reaction) and current initial concentration
@@ -435,6 +442,13 @@ class DRCAnalysis:
                     e_shift=self.e_shift,
                     cores=self.cores,
                 )
+
+                # DRC coefficients are matched to reactions.csv rows by position
+                if len(drc_coefficients) != len(self.reactions):
+                    raise ValueError(
+                        f"COPASI returned {len(drc_coefficients)} DRC coefficients but "
+                        f"reactions.csv has {len(self.reactions)} reactions; cannot match them"
+                    )
 
                 data.append(
                     {
