@@ -68,6 +68,10 @@ def load_yaml(path):
     try:
         with open(name, encoding="utf-8") as f:
             doc = yaml.load(f, Loader=StrictLoader)
+    except OSError as error:
+        raise StudyError(
+            [f"{name}: cannot read the file ({error.strerror})"]
+        ) from error
     except yaml.YAMLError as error:
         mark = getattr(error, "problem_mark", None) or getattr(
             error, "context_mark", None

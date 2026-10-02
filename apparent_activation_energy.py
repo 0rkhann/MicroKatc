@@ -209,6 +209,12 @@ class ReactionParameterCalculator:
                     else:
                         data[-1]["compound"] = key.replace(".Rate", "")
 
+        if not data:
+            raise ValueError(
+                f"no Ea could be fitted from the {'fluxes' if calculation_type == 'ri' else 'rates'}: "
+                "every one is zero or changes sign across the temperature range at the sampling "
+                "time (is the system at equilibrium by then? sample earlier)"
+            )
         return pd.DataFrame(data)
 
 

@@ -70,6 +70,11 @@ def test_overall_reaction_rejects_via():
         raise AssertionError("expected StepSyntaxError")
 
 
+def test_species_name_starting_with_via():
+    step = parse_step("A + via1 <=> B via TS")
+    assert step.reactants == (("A", 1), ("via1", 1)) and step.ts == "TS", step
+
+
 if __name__ == "__main__":
     for name, test in list(globals().items()):
         if name.startswith("test_"):

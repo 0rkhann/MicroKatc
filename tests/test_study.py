@@ -300,6 +300,33 @@ def test_reversed_and_empty_steps_are_errors():
     )
 
 
+def test_product_and_studied_species_must_be_names():
+    assert_error(
+        changed(lambda d: d["species"].update(product=["P"])),
+        "species.product: must be one species name, got ['P']",
+    )
+    assert_error(
+        changed(lambda d: d["conditions"].update(studied_species=["S"])),
+        "conditions.studied_species: must be one species name, got ['S']",
+    )
+
+
+def test_studied_species_cannot_be_the_product():
+    assert_error(
+        changed(lambda d: d["conditions"].update(studied_species="P")),
+        "conditions.studied_species: P is the product, which always starts at 0",
+    )
+
+
+def test_unused_typed_energy_is_a_warning():
+    doc = changed(lambda d: d["species"]["energies_kcal_mol"].update(TS_typo=3.0))
+    study = load_study(write(doc))
+    assert (
+        "warning: species.energies_kcal_mol.TS_typo is not used by any step"
+        in study.warnings
+    ), study.warnings
+
+
 if __name__ == "__main__":
     for name, test in list(globals().items()):
         if name.startswith("test_"):

@@ -136,6 +136,17 @@ def overall_reaction_energy(study, gibbs):
     return products - reactants
 
 
+def barrier_messages(study, gibbs, table, temperature_K):
+    """Negative-barrier warnings, and the overall ΔG at the working temperature"""
+    messages = negative_barrier_warnings(study, table)
+    if temperature_K == study.temperature_K:
+        delta = overall_reaction_energy(study, gibbs)
+        messages.append(
+            f"Overall reaction {study.overall.text}: ΔG = {delta:.1f} kcal/mol at {temperature_K} K"
+        )
+    return messages
+
+
 def write_barrier_tables(study):
     """Writes the compound and barrier tables for every needed temperature into the current folder.
 
@@ -151,6 +162,9 @@ def write_barrier_tables(study):
             temperature
         )
         if reactions_path.is_file() and compounds_path.is_file():
+            gibbs = pd.read_csv(compounds_path, index_col=0)["Gibbs Free Energies"]
+            table = pd.read_csv(reactions_path)
+            messages += barrier_messages(study, gibbs.to_dict(), table, temperature)
             continue
         print(f"Computing Gibbs energies at {temperature} K...")
         gibbs = gibbs_energies(study, temperature)
@@ -165,10 +179,5 @@ def write_barrier_tables(study):
         partial.replace(
             reactions_path
         )  # written last and atomically: its presence means complete
-        messages += negative_barrier_warnings(study, table)
-        if temperature == study.temperature_K:
-            delta = overall_reaction_energy(study, gibbs)
-            messages.append(
-                f"Overall reaction {study.overall.text}: ΔG = {delta:.1f} kcal/mol at {temperature} K"
-            )
+        messages += barrier_messages(study, gibbs, table, temperature)
     return messages
