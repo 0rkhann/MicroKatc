@@ -1,0 +1,58 @@
+# Tests and lint on every pull request and push to main.
+# Installs the pinned requirements (including the COPASI Python bindings) and thermochange,
+# so tests/test_paper_barriers.py checks the Gibbs barriers against the paper's SI Table S3.
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The versions used to reproduce the paper (see requirements.txt)
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.10"
+          cache: pip
+
+      - name: Install requirements
+        run: pip install -r requirements.txt ruff==0.16.10
+
+      - name: Fetch thermochange at a pinned commit
+        run: |
+          set -euo pipefail
+          git init -q "$RUNNER_TEMP/thermochange"
+          git -C "$RUNNER_TEMP/thermochange" fetch -q --depth 1 https://gitlab.com/dgarayr/thermochange.git daed0427e5ce04aad3e19170286aed85a35326ee
+          git -C "$RUNNER_TEMP/thermochange" checkout -q FETCH_HEAD
+          echo "thermochange=$RUNNER_TEMP/thermochange" >> "$GITHUB_ENV"
+
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+
+      # Each test runs in its own process: several install a fake copasi_parser module.
+      - name: Tests
+        env:
+          MPLBACKEND: Agg
+        run: |
+          set -euo pipefail
+          for test in tests/test_*.py; do
+            echo "::group::$test"
+            output=$(python "$test")
+            echo "$output"
+            echo "::endgroup::"
+            if grep -q "^skipped" <<< "$output"; then
+              echo "::error file=$test::$test was skipped"
+              exit 1
+            fi
+          done
