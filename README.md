@@ -1,195 +1,190 @@
 <h1 align="center">MicroKatc</h1>
 
 <p align="center">
-  <i>A fully automated tool for analyzing a system consisting of catalytic cycles using microkinetics approach</i>
+  <b>Automated microkinetic analysis of interconnected catalytic cycles, from DFT outputs to mechanistic insight.</b>
+  <br/><br/>
+  <a href="https://doi.org/10.1021/acscatal.5c00348"><img alt="Published in ACS Catalysis" src="https://img.shields.io/badge/ACS%20Catal.-2025%2C%2015%2C%204739-1f6feb"/></a>
+  <a href="https://doi.org/10.1021/acscatal.5c00348"><img alt="DOI" src="https://img.shields.io/badge/DOI-10.1021%2Facscatal.5c00348-blue"/></a>
+  <img alt="Python 3" src="https://img.shields.io/badge/python-3-3776AB?logo=python&logoColor=white"/>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-green"/></a>
   <br/><br/>
   <img width="600" alt="MicroKatc logo" src="pics/logo.png"/>
 </p>
 
-### Table of Contents
+MicroKatc turns a set of Gaussian calculations and a list of elementary steps into a complete kinetic picture of a catalytic system. It computes thermally corrected Gibbs energies, builds and runs COPASI microkinetic models, and then answers the questions a mechanistic study needs: **which steps control the rate, how the apparent activation energy responds to reaction conditions, and where the catalyst actually spends its time.**
 
-- [Quick Start](#quick-start)
-    - [Install](#install)
-    - [Requirements](#requirements)
-    - [Run](#run)
-- [Some Notes](#some-notes)
-- [Example](#example)
-    - [Results](#results)
-    - [Additional Results](#additional-results)
-- [Citation](#citation)
-- [Acknowledgements](#acknowledgements)
+The approach is published in:
 
----
+> O. Abdullayev, D. Garay-Ruiz, B. Bori-Bru, C. Bo. "Microkinetic Assessment of Ligand-Exchanging Catalytic Cycles." *ACS Catal.* **2025**, *15* (6), 4739–4745. [doi:10.1021/acscatal.5c00348](https://doi.org/10.1021/acscatal.5c00348)
 
-## Quick Start
+## Highlights
 
-### Install
+- **End-to-end pipeline:** raw DFT output files in, publication-ready figures out, driven by one script.
+- **Apparent activation energy (E<sub>a</sub>)** from Arrhenius fits of every step's flux and every species' rate of change, swept over temperature and over the concentration of any chosen reactant.
+- **Degree of rate control (DRC)** for every elementary step, parallelised across CPU cores, to identify the rate-determining and inhibiting steps.
+- **Multi-cycle catalyst tracking:** the catalyst concentration in each competing cycle (for example 0-ligand vs. 1-ligand cycles) as conditions change.
+- **Conversion-time analysis:** time to reach a set product yield as a function of reactant concentration.
+- **Result caching:** simulations and fitted parameters are saved as CSV files and reused, so long parameter sweeps never repeat finished work.
 
-To get started, you'll need to install the following packages:
+## How it works
 
-1. **Thermochange**: Package for thermochemical correction
-    ```bash
-    git clone https://gitlab.com/dgarayr/thermochange.git
-    ```
+```mermaid
+flowchart LR
+    A["Gaussian .out files"] --> B["thermochange<br/>G(T, P) of each species"]
+    C["reactions.csv<br/>elementary steps + TS"] --> D
+    B --> D["Forward / reverse<br/>Gibbs barriers"]
+    D --> E["COPASI model<br/>(copasi_helper)"]
+    E --> F["Time-course simulations<br/>over T and c0"]
+    F --> G["Apparent Ea"]
+    F --> H["Degree of rate control"]
+    F --> I["Catalyst distribution<br/>and conversion time"]
+```
 
-2. **COPASI Helper**: Package to handle COPASI output (microkinetics)
-    ```bash
-    git clone https://gitlab.com/dgarayr/copasi_helper.git
-    ```
-    > **_NOTE:_**  Download the COPASI software as well
+| Module | Role |
+| --- | --- |
+| [`main.py`](main.py) | Entry point; all analysis parameters are set here |
+| [`get_G_compounds.sh`](get_G_compounds.sh), [`calculating_G_for_microkinetics.py`](calculating_G_for_microkinetics.py) | Thermochemistry: G of each species and the forward/reverse barrier of each step |
+| [`microkinetics_simulation.py`](microkinetics_simulation.py) | COPASI simulations with convergence checks and caching; catalyst and conversion analyses |
+| [`apparent_activation_energy.py`](apparent_activation_energy.py) | Apparent E<sub>a</sub> fits and DRC calculation |
+| [`plotting_functions.py`](plotting_functions.py) | All figures |
 
-3. **MicroKatc**: Package for analysis of catalytic cycles
-    ```bash
-    git clone https://github.com/0rkhann/MicroKatc.git
-    ```
+## Case study: Rh-catalysed hydroformylation
 
-### Requirements
+<p align="center">
+  <img width="1000" alt="Hydroformylation catalytic cycles" src="pics/catalytic_cycle.jpg"/>
+</p>
 
-To install the required libraries, use:
+The example data in this repository model the hydroformylation of ethene by a homogeneous rhodium catalyst. Two cycles compete: one without (0L) and one with (1L) a coordinated PMe<sub>3</sub> ligand. The analysis varies the initial PMe<sub>3</sub> concentration (`reactant_to_study = "PMe3"`).
+
+**Key findings**
+
+- Adding PMe<sub>3</sub> shifts the catalyst from the 0L cycle into the 1L cycle. The 1L cycle has lower activation energies, becomes the main source of product, and reaches 99 % conversion much faster.
+- The rate-determining step moves with the conditions: I8_0L ⇌ I9_0L controls the rate at low PMe<sub>3</sub>, and I3_1L ⇌ I4_1L takes over at high PMe<sub>3</sub>. The negative DRC of I3_0L ⇌ I4_0L shows that this step inhibits the 0L cycle.
+- More PMe<sub>3</sub> also releases more CO, which poisons the catalyst at the I6 ⇌ I7 steps. This is why the E<sub>a</sub> of the rate-determining steps rises and then plateaus.
+
+### 1. ln(r<sub>i</sub>) vs. 1/T
+
+<p align="center">
+  <img width="1600" alt="ln(ri) vs 1/T" src="pics/ln(ri)_1_T_PMe3_1.000000e-05_T_range_325.0K_375.0K.svg"/>
+</p>
+
+Arrhenius plots for each step at a fixed PMe<sub>3</sub> concentration. They check that every step is linear in 1/T and that the low-catalyst-concentration assumption holds. By default, only steps with R<sup>2</sup> > 0.9 are shown.
+
+### 2. Apparent E<sub>a</sub> of the rate-determining steps (flux-based)
+
+<p align="center">
+  <img width="1600" alt="Ea vs c0 flux based" src="pics/Ea_of_rate_determining_steps.png"/>
+</p>
+
+The rate-determining steps are those identified by the DRC analysis (figure 4). Their activation energy rises with c<sub>0</sub>(PMe<sub>3</sub>) and then plateaus as the catalyst saturates with PMe<sub>3</sub>. For both kinds of step, E<sub>a</sub> is lower in the 1L cycle than in the 0L cycle, so the 1L cycle has faster kinetics and dominates product formation. The rise before the plateau comes from CO release: more PMe<sub>3</sub> frees more CO, which poisons the catalyst at the I6 ⇌ I7 steps.
+
+### 3. Apparent E<sub>a</sub> of product formation (rate-based)
+
+<p align="center">
+  <img width="700" alt="Ea vs c0 rate based" src="pics/Ea_c0(PMe3)_rate_based.svg"/>
+</p>
+
+This E<sub>a</sub> comes from the rate of change of the product concentration. Overall it falls as PMe<sub>3</sub> increases, reflecting the activation of the 1L cycle. The slight increase at the highest concentrations is attributed to catalyst poisoning.
+
+### 4. Degree of rate control vs. c<sub>0</sub>(PMe<sub>3</sub>)
+
+<p align="center">
+  <img width="1000" alt="DRC vs c0" src="pics/DRC_of_influencing_steps.png"/>
+</p>
+
+I8_0L ⇌ I9_0L is rate-determining in the 0L cycle, but it loses importance as the 1L cycle becomes active. The DRC of I3_1L ⇌ I4_1L grows with PMe<sub>3</sub>, making it the controlling step at high concentration. The DRC of I3_0L ⇌ I4_0L becomes negative, which shows that this step inhibits the 0L cycle.
+
+### 5. Catalyst distribution between cycles
+
+<p align="center">
+  <img width="700" alt="Catalyst concentration vs c0" src="pics/C(catalyst)_C(PMe3)_350.0K_2.91006e%2B03atm.svg"/>
+</p>
+
+The catalyst concentration in each cycle, at a chosen time, as PMe<sub>3</sub> increases. Beyond a threshold concentration, the 1L cycle holds more catalyst than the 0L cycle.
+
+### 6. Concentration profiles over time
+
+<p align="center">
+  <img width="1000" alt="Concentration evolution" src="pics/C(compounds)_C(PMe3)_350.0K_2.91006e%2B03atm.svg"/>
+</p>
+
+The time evolution of selected species at each PMe<sub>3</sub> concentration. The product (red line) reaches its maximum sooner as more PMe<sub>3</sub> is added, because the 1L cycle produces it more efficiently.
+
+### 7. Time to 99 % conversion
+
+<p align="center">
+  <img width="700" alt="Conversion time vs c0" src="pics/C(PMe3)_total_t_product_conversion_350.0K_2.91006e%2B03atm.svg"/>
+</p>
+
+The time for the product to reach 99 % of the maximum allowed by the limiting reactant (the threshold is adjustable). It drops sharply as PMe<sub>3</sub> increases.
+
+### Putting it together
+
+<p align="center">
+  <img width="1000" alt="Combined analysis" src="pics/final_pieces.png"/>
+</p>
+
+These panels are not produced by `main.py`, but a few extra lines of code generate them from the same results. The first panel was simulated at low catalyst concentration, as the apparent E<sub>a</sub> analysis requires.
+
+- **Panel 1:** as c<sub>0</sub>(PMe<sub>3</sub>) increases, the poisoning intermediates I1_0L and I7_0L decrease, while I1_1L and I7_1L increase.
+- **Panel 2:** the E<sub>a</sub> of the rate-determining steps rises in both cycles. The product's E<sub>a</sub> still falls, because the 1L cycle takes over product release.
+- **Panel 3:** the DRC of I8_0L ⇌ I9_0L falls, because I3_0L ⇌ I4_0L inhibits the 0L cycle and pushes the catalyst into the 1L cycle, raising the DRC of I3_1L ⇌ I4_1L.
+
+This explains why the E<sub>a</sub> of the 1L rate-determining step increases even though the 1L cycle becomes more active. As entering the 1L cycle gets easier, its own poisoning intermediates build up, which makes product formation in that cycle harder.
+
+## Quick start
+
+### 1. Install dependencies
+
+MicroKatc relies on two packages by D. Garay-Ruiz, and on COPASI:
 
 ```bash
+git clone https://gitlab.com/dgarayr/thermochange.git    # thermochemical corrections
+git clone https://gitlab.com/dgarayr/copasi_helper.git   # COPASI model building and simulation
+git clone https://github.com/0rkhann/MicroKatc.git
+```
+
+Also install the [COPASI](https://copasi.org/) software. Then, inside a virtual environment, install the Python requirements:
+
+```bash
+cd MicroKatc
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-> **_NOTE:_**  It is advisable to do it in the virtual environment as some packages are compatible only with older versions of numpy and pandas
+A virtual environment is recommended, because some dependencies need older versions of numpy and pandas.
 
-### Run
-1. Place all computed .out files into the GaussOutputFiles folder
-2. Create a reactions.csv file with all reactions in the cycle (refer to the example provided)
-3. Define an environment variable *thermochange* pointing at the path where **thermochange** is installed (it must be exported so that `get_G_compounds.sh` can see it):
-   ```bash
-   export thermochange=/home/user/programs/thermochange
-   ```
-4. Adjust the input parameters in main.py if necessary and execute:
-   ```bash
-   python3 ./main.py
-   ```
+### 2. Prepare inputs
 
-## Some Notes
+1. Put the Gaussian `.out` file of every species and transition state in `GaussOutputFiles/`.
+2. List the elementary steps in `reactions.csv`, one per row, with the transition state in the `TS` column. Use `-` for a barrierless step. See the provided example.
 
-1. **Molecular Computations**: Molecules were computed using DFT with the 6-311g(d,p) basis set and ωB97XD functional.
+### 3. Run
 
-2. **Ideal Gas Approximation**: The pressure was adjusted based on the temperature to maintain a concentration of 1M, approximating the conditions of a liquid reaction medium, while considering ideal gas behavior:
-    <p align="center">
-        <span style="font-size: 1.5em;">$C = \frac{P}{RT}$</span>
-    </p>
-    
-3. **Energy Barrier**: According to Besora et al. 2018, for "barrierless" steps, steps controlled by diffusion, the energy barrier was set to 4 kcal/mol.
+```bash
+export thermochange=/path/to/thermochange   # must be exported so get_G_compounds.sh can see it
+python3 main.py
+```
 
-4. **Simplification of Cycles**: The reactions between intermediates were considered in the most straightforward manner, without accounting for potential complexities introduced by many other possible transformations between cycles or between non-neighboring intermediates.
+Every analysis parameter (temperatures, concentration ranges, simulation times, the reactant to study, the number of cores for DRC) is set and commented in [`main.py`](main.py).
 
-5. **Catalyst Concentration**: For the first part (Ea, apparent activation energy), the concentration of a catalyst should be assumed to be low to substitute $k_i$ with flux/rate in the linear form of the Arrhenius equation:
+## Modelling assumptions
 
-<p align="center">
-        <strong>Arrhenius Equation:</strong><br>
-        <span style="font-size: 1.5em;">$k = A \exp\left(\frac{-E_a}{RT}\right)$</span>
-    </p>
-    <p align="center">
-        <strong>Linear Form of Arrhenius Equation:</strong><br>
-        <span style="font-size: 1.5em;">$\ln(k_i) = \ln(A) - \frac{E_a}{RT}$</span>
-    </p>
-    <p align="center">
-        <strong>At Low Catalyst Concentration:</strong><br>
-        <span style="font-size: 1.5em;">$\ln(r_i) = \ln(A) - \frac{E_a}{RT}$</span>
-        </br>
-        <span style="font-size: 1.5em;">$\ln(v_i) = \ln(A) - \frac{E_a}{RT}$</span>
-    </p>
+1. **Electronic structure:** species were computed with DFT at the ωB97X-D/6-311G(d,p) level.
+2. **Standard state:** the pressure is set from the temperature so that the ideal-gas concentration is 1 M, approximating a liquid medium: $C = \frac{P}{RT}$.
+3. **Barrierless steps:** steps without a located transition state are treated as diffusion-controlled, with a barrier of 4 kcal/mol (Besora et al., 2018).
+4. **Network topology:** only the listed steps between neighbouring intermediates are included. Cross-cycle or non-neighbour transformations are not modelled.
+5. **Apparent E<sub>a</sub>:** at low catalyst concentration, the rate constant $k_i$ in the linearised Arrhenius equation can be replaced by the step flux $r_i$ or the species rate $v_i$:
 
-## Example
-
-<p align="center">
-  <img width="1000" alt="cycle_example" src="pics/catalytic_cycle.jpg"/>
-</p>
-
-</br>
-
-The hydroformylation catalytic cycle with a homogeneous rhodium-based catalyst was studied by varying the initial concentration of PMe3 (i.e., <b>reactant_to_study = PMe3</b>).
-
-### Results
-
-#### 1. ln(ri) vs. T<sup>-1</sup> at specific concentration of studied reactant
-
-<p align="center">
-  <img width="1600" alt="ln(ri)_1_T" src="pics/ln(ri)_1_T_PMe3_1.000000e-05_T_range_325.0K_375.0K.svg"/>
-</p>
-
-This plot assesses the linearity of different steps and checks consistency with the low catalyst concentration assumption. Only steps with an R<sup>2</sup> value greater than 0.9 are displayed by default (can be adjusted).
-
-#### 2. Ea vs. c0(PMe3) flux based
-
-<p align="center">
-  <img width="1600" alt="Ea_c0_flux" src="pics/Ea_of_rate_determining_steps.png"/>
-</p>
-
-It was interesting to observe how the activation energy of the rate-determining steps (rate determining steps were identified by the DRC vs. c0 plot) changes with increasing initial concentrations of PMe3. Initially, the activation energy increases and then plateaus as the catalyst becomes saturated with PMe3. The activation energy in the 1L cycle is lower than in the 0L cycle for both types of steps, indicating that the 1L cycle is thermodynamically more favorable and, therefore, has faster kinetics, making it the predominant pathway for product formation. The increasing trend of activation energy until the plateau can be attributed to the fact that as more PMe3 is introduced into the system, more CO is released, leading to greater catalyst poisoning during the I6 ⇌ I7 steps.
-
-#### 3. Ea vs. c0(PMe3) compound based
-
-<p align="center">
-  <img width="700" alt="Ea_c0_compound" src="pics/Ea_c0(PMe3)_rate_based.svg"/>
-</p>
-
-It was interesting to observe how the activation energy, related to the rate of change in compound concentrations, varies with increasing initial concentrations of PMe3. Overall, the activation energy decreases as PMe3 concentration increases, indicating greater activation and thermodynamic favorability of the 1L cycle. The slight increase in activation energy at higher concentrations may be attributed to catalyst poisoning.
-
-#### 4. DRC vs. c0(PMe3)
-
-<p align="center">
-  <img width="1000" alt="DRC_c0" src="pics/DRC_of_influencing_steps.png"/>
-</p>
-
-It is important to determine the rate-determining steps to thoroughly analyze the system. The Degree of Rate Control (DRC) is a technique used for this purpose. By examining a DRC plot, one can identify these key steps. Additionally, it is interesting to observe how the DRC of different steps changes with increasing initial concentrations of PMe3.
-
-From the plot, we can see that the step I8_0L = I9_0L is a rate-determining step in the 0L cycle. However, as the concentration of PMe3 increases, this step becomes less significant for the system because the 1L cycle starts to become more active. In contrast, for the step I3_1L = I4_1L, its DRC increases with higher concentrations of PMe3, making it a more rate-determining step. Another notable observation is that the DRC of the I3_0L = I4_0L step becomes negative with increased PMe3 concentration, indicating inhibition in the 0L cycle.
-
-#### 5. c(catalyst) vs. c0(PMe3)
-
-<p align="center">
-  <img width="700" alt="c_catalyst_c0" src="pics/C(catalyst)_C(PMe3)_350.0K_2.91006e%2B03atm.svg"/>
-</p>
-
-This plot shows the concentration of the catalyst at a specified time (adjusted in case) across different cycles with increasing initial concentrations of PMe3. It is evident that as more PMe3 is introduced into the system, the 1L cycle becomes more predominant. After a certain point, the concentration of the catalyst in the 1L cycle increases significantly, surpassing that of the 0L cycle.
-
-#### 6. Concentration evolution over time
-
-<p align="center">
-  <img width="1000" alt="c_evolution_c0" src="pics/C(compounds)_C(PMe3)_350.0K_2.91006e%2B03atm.svg"/>
-</p>
-
-This plot shows the evolution of concentrations for different species (adjusted in case) with varying initial concentrations of PMe3. The red line, representing the product, reaches its maximum concentration more quickly with higher amounts of PMe3 introduced into the system. This indicates that the 1L cycle is more efficient at producing the product and does it faster.
-
-#### 7. Time of product conversion vs. c(PMe3)
-
-<p align="center">
-  <img width="700" alt="t_conversion_c" src="pics/C(PMe3)_total_t_product_conversion_350.0K_2.91006e%2B03atm.svg"/>
-</p>
-
-This plot shows the time required for the product to reach a specified threshold of 99% (adjusted in case) with varying initial concentrations of PMe3. It can be observed that as the amount of PMe3 introduced into the system increases, the time for the product to reach 99% of its maximum concentration decreases significantly, considering the concentration of the limiting reactant. This metric indicates that the 1L cycle is more efficient at producing the product and does so more quickly.
-
-### Additional Results
-
-These results are not provided in the script. However, they can easily be obtained by adding a few lines of code.
-
-<p align="center">
-  <img width="1000" alt="Ea_c0" src="pics/final_pieces.png"/>
-</p>
-
-> **_NOTE:_**  The first plot was simulated at a low concentration of the catalyst to meet the conditions required for the apparent activation energy assumption.
-
-This figure was created as a final piece to complement the overall analysis. The first plot shows the change in concentration of "poisoning" intermediates over time. It demonstrates that the concentrations of I1_0L and I7_0L decrease, while those of I1_1L and I7_1L increase as the initial concentration of PMe3 rises.
-
-From the second plot, we observe that as more PMe3 is introduced into the system, the activation energy (Ea) of the rate-determining steps in both the 0L and 1L cycles increases. However, the 1L cycle becomes predominant in product release, which is why we see a decrease in the product’s Ea on the plot of Ea versus c0(PMe3). What isn’t immediately obvious from this plot is why the Ea of the rate-determining step in the 1L cycle does not decrease even as the 1L cycle becomes more active and the catalyst is more present in the 1L cycle. To understand this, we need to look at the first and third plots.
-
-The third plot shows that as c0(PMe3) increases, the DRC of the I8_0L = I9_0L step decreases because the I3_0L = I4_0L step inhibits the 0L cycle, facilitating the shift to the 1L cycle. This, in turn, increases the DRC of the I3_1L = I4_1L step. As it becomes easier to enter the 1L cycle with increased c0(PMe3), the concentrations of poisoning intermediates in the 0L cycle decrease. However, the concentrations of poisoning intermediates in the 1L cycle increase, making it "harder" to form the product in the 1L cycle. This explains why the Ea for the I3_1L = I4_1L step increases.
+$$\ln r_i = \ln A - \frac{E_a}{RT}, \qquad \ln v_i = \ln A - \frac{E_a}{RT}$$
 
 ## Citation
 
 If you use MicroKatc in your work, please cite:
 
-> O. Abdullayev, D. Garay-Ruiz, B. Bori-Bru, C. Bo. "Microkinetic Assessment of Ligand-Exchanging Catalytic Cycles." *ACS Catal.* **2025**, *15* (6), 4739–4745. https://doi.org/10.1021/acscatal.5c00348
-
 ```bibtex
 @article{Abdullayev2025,
-  author  = {Abdullayev, Orkhan and Garay-Ruiz, Diego and Bori-Bru, B. and Bo, Carles},
+  author  = {Abdullayev, Orkhan and Garay-Ruiz, Diego and Bori-Bru, Berta and Bo, Carles},
   title   = {Microkinetic Assessment of Ligand-Exchanging Catalytic Cycles},
   journal = {ACS Catalysis},
   year    = {2025},
@@ -200,7 +195,12 @@ If you use MicroKatc in your work, please cite:
 }
 ```
 
-Citation metadata is also available in [`CITATION.cff`](CITATION.cff); GitHub shows it under "Cite this repository".
+Citation metadata is also in [`CITATION.cff`](CITATION.cff); GitHub shows it under "Cite this repository".
 
 ## Acknowledgements
-I sincerely thank my supervisor, Dr. Diego Ruiz Garay, and Principal Investigator, Prof. Carles Bo, for their invaluable guidance and support, which have greatly enriched my experience at ICIQ. I also extend my heartfelt thanks to my fellow summer research colleagues, who became dear friends during these past two months. The time we spent together made this journey truly rewarding and memorable.
+
+MicroKatc was developed during a summer research stay at [ICIQ](https://iciq.org/). I sincerely thank my supervisor, Dr. Diego Garay-Ruiz, and Principal Investigator, Prof. Carles Bo, for their guidance and support. I also thank my fellow summer research colleagues, who became dear friends and made the experience truly memorable.
+
+## License
+
+[MIT](LICENSE)
