@@ -22,7 +22,8 @@ The approach is published in:
 
 ## Highlights
 
-- **End-to-end pipeline:** raw DFT output files in, publication-ready figures out, driven by one script.
+- **End-to-end pipeline:** raw DFT output files in, publication-ready figures out, driven by one command.
+- **One study file per system:** steps written as chemists write them (`A + 2 B <=> C via TS`), energies from Gaussian output files or typed in kcal mol<sup>-1</sup>, and every problem in the file reported with its location before anything runs.
 - **Apparent activation energy (E<sub>a</sub>)** from Arrhenius fits of every step's flux and every species' rate of change, swept over temperature and over the concentration of any chosen reactant.
 - **Degree of rate control (DRC)** for every elementary step, by central finite differences parallelised across CPU cores, to identify the rate-determining and inhibiting steps.
 - **Multi-cycle catalyst tracking:** the catalyst concentration in each competing cycle (for example 0-ligand vs. 1-ligand cycles) as conditions change.
@@ -53,7 +54,7 @@ The approach is published in:
   <img width="1000" alt="Hydroformylation catalytic cycles" src="pics/catalytic_cycle.jpg"/>
 </p>
 
-The example data in this repository model the hydroformylation of ethene by a homogeneous rhodium catalyst. Two cycles compete: one without (0L) and one with (1L) a coordinated PMe<sub>3</sub> ligand. The analysis varies the initial PMe<sub>3</sub> concentration (`reactant_to_study = "PMe3"`).
+The example data in this repository model the hydroformylation of ethene by a homogeneous rhodium catalyst. Two cycles compete: one without (0L) and one with (1L) a coordinated PMe<sub>3</sub> ligand. The analysis varies the initial PMe<sub>3</sub> concentration (`studied_species: PMe3` in the study file).
 
 **Key findings**
 
