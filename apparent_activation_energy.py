@@ -1,3 +1,5 @@
+"""Apparent activation energy (Ea) and degree of rate control (DRC) analyses built on COPASI simulations"""
+
 import os
 
 import copasi_parser as cpx
@@ -235,6 +237,7 @@ class ApparentEaAnalysis:
 
     @property
     def df(self):
+        """Returns the dataframe with ln(ri) and ln(vi) values, computing it on first access"""
         if self._df is None:
             print("Computing dataframe with ln(ri) and ln(vi) values...")
             self._df = ReactionDataHandler.get_dataframe_with_data(
@@ -250,6 +253,7 @@ class ApparentEaAnalysis:
 
     @property
     def df_flux(self):
+        """Returns flux-based (ri) Ea parameters, reading the cached csv or computing and saving it"""
         if self._df_flux is None:
             print("Computing flux-based parameters...")
             self._df_flux = ReactionParameterCalculator.calculate_reaction_parameters(
@@ -269,6 +273,7 @@ class ApparentEaAnalysis:
 
     @property
     def df_rate(self):
+        """Returns rate-based (vi) Ea parameters, reading the cached csv or computing and saving it"""
         if self._df_rate is None:
             print("Computing rate-based parameters...")
             self._df_rate = ReactionParameterCalculator.calculate_reaction_parameters(
@@ -288,6 +293,7 @@ class ApparentEaAnalysis:
     def plot_ln_ri_vs_1_over_T(
         self, df_flux, reactant_initial_concentration_plot, nrows, ncols, figsize
     ):
+        """Plots and saves ln(ri) vs. 1/T at the given initial concentration of the studied reactant"""
         fig_name = f"ln(ri)_1_T_{self.reactant_to_study}_{reactant_initial_concentration_plot:.6e}_T_range_{self.T_values_array[0]}K_{self.T_values_array[-1]}K.svg"
 
         self.plot_function.plot_ln_ri_vs_1_over_T(
@@ -305,6 +311,7 @@ class ApparentEaAnalysis:
     def plot_Ea_vs_c0_flux_based(
         self, df_flux, reactions_to_plot, nrows, ncols, figsize, log_x
     ):
+        """Plots and saves flux-based Ea vs. initial concentration of the studied reactant for the specified reactions"""
         fig_name = f"Ea_c0({self.reactant_to_study})_flux_based.svg"
         self.plot_function.plot_Ea_vs_reactant_c0(
             nrows,
@@ -322,6 +329,7 @@ class ApparentEaAnalysis:
     def plot_Ea_vs_c0_rate_based(
         self, df_rate, compounds_to_plot, nrows, ncols, figsize, log_x
     ):
+        """Plots and saves rate-based Ea vs. initial concentration of the studied reactant for the specified compounds"""
         fig_name = f"Ea_c0({self.reactant_to_study})_rate_based.svg"
         self.plot_function.plot_Ea_vs_reactant_c0(
             nrows,
@@ -338,6 +346,8 @@ class ApparentEaAnalysis:
 
 
 class DRCAnalysis:
+    """Computes and plots degree of rate control (DRC) coefficients of each step with copasi_helper"""
+
     def __init__(
         self,
         reactant_concentration_array,
@@ -376,6 +386,7 @@ class DRCAnalysis:
 
     @property
     def df_drc(self):
+        """Returns DRC coefficients, reading the cached csv or computing and saving it"""
         if self._df_drc is None:
             self._df_drc = self.calculate_degree_of_rate_control()
             print("Saving df drc csv...")
@@ -441,6 +452,7 @@ class DRCAnalysis:
         return pd.DataFrame(data)
 
     def plot_drc_vs_c0(self, nrows, ncols, figsize, df_drc, temperature_value, log_x):
+        """Plots and saves DRC coefficients of each step vs. initial concentration of the studied reactant"""
         fig_name = f"drc_c0_{self.reactant_to_study}_{self.reactant_concentration_array[0]}_{self.reactant_concentration_array[-1]}.svg"
         self.plot_function.plot_drc_vs_c0(
             nrows,

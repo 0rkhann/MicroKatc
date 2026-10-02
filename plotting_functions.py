@@ -1,3 +1,5 @@
+"""Matplotlib/seaborn plotting helpers; figures are saved to microkinetics_simulations_images"""
+
 import os
 
 import matplotlib.pyplot as plt
@@ -11,6 +13,8 @@ IMAGES_SIMULATIONS_OUTPUT_DIR_NAME = "microkinetics_simulations_images"
 
 
 class PlotFunctions:
+    """Plotting functions for the analyses; creates the output image directory on instantiation"""
+
     def __init__(self):
         os.makedirs(IMAGES_SIMULATIONS_OUTPUT_DIR_NAME, exist_ok=True)
 
@@ -333,6 +337,7 @@ class PlotFunctions:
         temperature_value,
         log_x=False,
     ):
+        """Plots DRC coefficients of each reaction vs. initial concentration of the studied reactant at the given temperature"""
         print(f"Plotting: {fig_name}...")
         fig, axes = self.initialize_fig_axes_objects(nrows, ncols, figsize)
 
