@@ -1,6 +1,7 @@
 """Apparent activation energy (Ea) and degree of rate control (DRC) analyses built on COPASI simulations"""
 
 import os
+import re
 
 import copasi_parser as cpx
 import numpy as np
@@ -112,6 +113,16 @@ class ReactionDataHandler:
         return collected_data
 
 
+def reaction_of_flux(flux_name, reactions):
+    """Returns the reactions.csv row of a COPASI flux column: copasi_helper names row i r{i+1:02d}"""
+    match = re.fullmatch(r"r(\d+)\.Flux", flux_name)
+    if match is None or not 1 <= int(match.group(1)) <= len(reactions):
+        raise ValueError(
+            f"Cannot match flux column {flux_name!r} to a row of reactions.csv"
+        )
+    return reactions[int(match.group(1)) - 1]
+
+
 class ReactionParameterCalculator:
     """Calculates reaction parameters like activation energy and R2"""
 
@@ -132,7 +143,7 @@ class ReactionParameterCalculator:
             else [key for key in df["name"].unique() if key.endswith(".Rate")]
         )
 
-        # Fluxes are matched to reactions.csv rows by position, so the counts must agree
+        # Every reactions.csv row must have exactly one flux column
         if calculation_type == "ri" and len(keys) != len(reactions):
             raise ValueError(
                 f"COPASI returned {len(keys)} '.Flux' columns but reactions.csv has "
@@ -179,7 +190,7 @@ class ReactionParameterCalculator:
                     )
 
                     if calculation_type == "ri":
-                        data[-1]["reaction"] = reactions[i]
+                        data[-1]["reaction"] = reaction_of_flux(key, reactions)
                     else:
                         data[-1]["compound"] = key.replace(".Rate", "")
 
