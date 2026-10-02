@@ -8,7 +8,9 @@ identical old code differ as much as old and new runs do). Each limit is about 1
 difference seen, where that difference is not far below a round number:
 - barrier tables: deterministic, compared exactly;
 - Ea of the rate-determining steps (r08, r13): largest difference 6.3e-5 kcal/mol, limit 1e-3;
-- Ea of product formation: largest difference 0.020 kcal/mol, limit 0.03;
+- Ea of product formation up to 1e-2 M PMe3: largest difference 0.020 kcal/mol, limit 0.03. Above
+  1e-2 M it varies more: two GitHub runs of the same commit gave 0.081 and 0.008 at 3.2e-2 M
+  (2026-10-02), limit 0.12;
 - DRC of the three key steps up to 1e-2 M PMe3: moved 5.5e-4, limit 1e-3. Above 1e-2 M less than 1 %
   of the catalyst is in the 0L cycle and the finite difference is ill-conditioned: the same input
   gave 0.9655, 0.9666 or 0.9875 for I3_1L = I4_1L at 0.1 M depending on key order, number type and
@@ -88,10 +90,13 @@ def main(results):
         1e-3,
     )
     both = merged(results, "rate", ["prod.Rate"])
+    difference = (both["Ea_old"] - both["Ea_new"]).abs()
+    low = both[next(c for c in both.columns if c.startswith("c0("))] <= 1e-2
+    report("Ea of product formation up to 1e-2 M", float(difference[low].max()), 3e-2)
     report(
-        "Ea of product formation",
-        float((both["Ea_old"] - both["Ea_new"]).abs().max()),
-        3e-2,
+        "Ea of product formation above 1e-2 M",
+        float(difference[~low].max()),
+        0.12,
     )
 
     def drc(path):
