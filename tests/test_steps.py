@@ -49,6 +49,8 @@ def test_errors():
         "A <=> B via TS1 TS2": "via must be followed by one transition-state name",
         "A b <=> B": "names cannot contain spaces",
         "1A <=> B": "names must start with a letter",
+        "C2,x <=> B": "names cannot contain , or /",
+        "C2/x <=> B": "names cannot contain , or /",
     }
     for text, message in cases.items():
         try:

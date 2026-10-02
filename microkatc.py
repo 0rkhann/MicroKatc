@@ -212,7 +212,8 @@ def run_analyses(study):
         summary = {
             "concentrations_M": concentrations.tolist(),
             "catalyst_M": dict(zip(cycles, shares)),
-            "t99_h": [t for t, _ in times],
+            # None where the product never reached the threshold in the simulated time
+            "t99_h": [{c: t for t, c in times}.get(c) for c in concentrations],
         }
         Path("microkinetics.json").write_text(json.dumps(summary, indent=1) + "\n")
 

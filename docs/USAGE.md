@@ -52,7 +52,7 @@ steps:
 ```
 
 - `<=>`, `=` and `⇌` all mean the same.
-- Species are separated by ` + `. Names are case-sensitive, start with a letter and contain no spaces.
+- Species are separated by ` + `. Names are case-sensitive, start with a letter and contain no spaces, commas or slashes.
 - A **barrierless** step (no `via`) is treated as diffusion-controlled: its transition state is placed 4 kcal mol<sup>-1</sup> above the higher of its two sides (Besora et al., 2018).
 - A **coefficient** n multiplies the species' Gibbs energy in the barrier, G(TS) − n·G(A), and gives a rate law of order n in that species.
 
@@ -101,7 +101,7 @@ conditions:
   output_step_s: 1                                      # optional, default 1
 ```
 
-Every analysis is repeated for each concentration of the studied species. `output_step_s` is the time between output points of every simulation; sampling and snapshot times must fall on that grid.
+Every analysis is repeated for each concentration of the studied species. `output_step_s` is the time between output points of every simulation; every `simulation_time_s` must be a multiple of it, and sampling and snapshot times must fall on that grid.
 
 ### 2.5 Analyses
 
@@ -170,7 +170,7 @@ Everything goes to `results/` next to the study file.
 | `G_values_of_reactions/` | Forward and reverse barrier of every step at each temperature |
 | `microkinetics_simulations/` | Raw COPASI time courses, and the `df_flux_*`, `df_rate_*` and `df_drc_*` tables with every fitted E<sub>a</sub>, R<sup>2</sup> and DRC |
 | `microkinetics_simulations_images/` | Arrhenius plots (R<sup>2</sup> > 0.9), E<sub>a</sub> of the product-forming steps and of product formation, DRC of every step, catalyst distribution, concentration profiles and conversion time |
-| `microkinetics.json` | Catalyst amount per cycle at the snapshot time and time to the conversion threshold, per studied concentration |
+| `microkinetics.json` | Catalyst amount per cycle at the snapshot time and time to the conversion threshold, per studied concentration (`null` where it was not reached) |
 | `model.cps` | The COPASI model of the last simulation |
 
 ## 5. Troubleshooting

@@ -63,6 +63,8 @@ def _side(text, label, whole):
             )
         if " " in name:
             raise StepSyntaxError(f'"{whole}": names cannot contain spaces ({name})')
+        if re.search(r"[,/]", name):
+            raise StepSyntaxError(f'"{whole}": names cannot contain , or / ({name})')
         if not NAME.fullmatch(name):
             raise StepSyntaxError(f'"{whole}": names must start with a letter ({name})')
         counts[name] = counts.get(name, 0) + (int(coef) if coef else 1)

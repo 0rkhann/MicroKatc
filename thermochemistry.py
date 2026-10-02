@@ -40,20 +40,23 @@ def gibbs_from_file(out_file, temperature_K, correction, thermochange):
     pressure = AuxiliaryFunctions.compute_pressure_value(temperature_K)
     script = Path(thermochange) / "formatters" / "formatted_energy_outputter.sh"
     flags = ["-g"] if correction == "Grimme" else []
+    name = Path(out_file).stem
     command = [
         "bash",
         str(script),
         *flags,
-        str(out_file),
+        f"{name}.out",
         str(temperature_K),
         str(pressure),
     ]
-    # thermochange writes temp_summary.temp to the current folder and does not always remove it
+    # thermochange writes temp_summary.temp to the current folder and does not always remove it.
+    # It also uses its file argument unquoted, so it gets a bare name linked into that folder: the
+    # study's own path may contain spaces.
     with tempfile.TemporaryDirectory() as scratch:
+        os.symlink(Path(out_file).resolve(), Path(scratch) / f"{name}.out")
         result = subprocess.run(
             command, cwd=scratch, capture_output=True, text=True, check=False
         )
-    name = Path(out_file).stem
     lines = result.stdout.strip().splitlines()
     fields = lines[-1].split("\t") if lines else []
     try:

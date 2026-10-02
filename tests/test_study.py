@@ -91,7 +91,7 @@ def test_typed_study_loads_with_derived_values():
 def test_max_product_uses_coefficients():
     doc = changed(lambda d: d["species"].update(overall_reaction="2 S + C1 <=> P"))
     doc["species"]["cycles"] = {"cat": ["C2"]}
-    doc["analyses"]["microkinetics"]["initial_M"] = {"C2": 1e-3}
+    doc["analyses"]["microkinetics"]["initial_M"] = {"C2": 1e-3, "C1": 0.3}
     study = load_study(write(doc))
     assert study.max_product_M({"S": 1.0, "C1": 0.3}) == 0.3
     assert study.max_product_M({"S": 0.4, "C1": 0.3}) == 0.2
@@ -263,6 +263,41 @@ def test_all_errors_reported_together():
     doc["species"]["product"] = "Q"
     messages = errors_of(doc)
     assert len(messages) >= 2, messages
+
+
+def test_empty_analysis_is_an_error():
+    assert_error(
+        changed(lambda d: d["analyses"].update(microkinetics=None)),
+        "analyses.microkinetics.simulation_time_s: must be a number, got None",
+    )
+
+
+def test_simulation_time_must_be_on_the_output_grid():
+    assert_error(
+        changed(lambda d: d["conditions"].update(output_step_s=3)),
+        "analyses.microkinetics.simulation_time_s: 1000 s is not a multiple of output_step_s (3 s)",
+    )
+
+
+def test_overall_reactant_needs_an_initial_concentration():
+    doc = changed(lambda d: d["species"].update(overall_reaction="S + B <=> P"))
+    doc["steps"][1] = "C2 + B <=> C1 + P  via TS1"
+    doc["species"]["energies_kcal_mol"]["B"] = 0.0
+    assert_error(
+        doc,
+        "analyses.microkinetics.initial_M: give the overall reactant B, or no product can form",
+    )
+
+
+def test_reversed_and_empty_steps_are_errors():
+    assert_error(
+        changed(lambda d: d["steps"].append("C2 <=> S + C1")),
+        "steps[2] repeats steps[0]",
+    )
+    assert_error(
+        changed(lambda d: d["steps"].append("C2 <=> C2")),
+        "steps[2] C2 <=> C2: both sides are the same",
+    )
 
 
 if __name__ == "__main__":

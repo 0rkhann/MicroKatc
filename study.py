@@ -198,13 +198,38 @@ def _concentrations(value, where, errors):
     return out
 
 
+def _multiple(seconds, step_s):
+    return abs(seconds / step_s - round(seconds / step_s)) <= 1e-9
+
+
+def _analysis(analyses, key, errors):
+    """An analysis's settings; an empty key gives {} so every required setting is reported"""
+    if key not in analyses:
+        return None
+    raw = analyses[key]
+    if raw is None:
+        return {}
+    if not isinstance(raw, dict):
+        errors.append(f"analyses.{key}: must be a mapping of settings")
+        return None
+    return raw
+
+
+def _total_on_grid(total_s, step_s, where, errors):
+    """COPASI spaces output points by total/round(total/step), so off-grid totals shift every time"""
+    if None not in (total_s, step_s) and not _multiple(total_s, step_s):
+        errors.append(
+            f"{where}.simulation_time_s: {total_s:g} s is not a multiple of output_step_s ({step_s:g} s)"
+        )
+
+
 def _on_grid(hours, step_s, total_s, where, errors):
     seconds = hours * 3600
     if seconds > total_s:
         errors.append(
             f"{where}: {hours:g} h is after the end of the simulation ({total_s:g} s = {total_s / 3600:.2g} h)"
         )
-    elif abs(seconds / step_s - round(seconds / step_s)) > 1e-9:
+    elif not _multiple(seconds, step_s):
         errors.append(
             f"{where}: {hours:g} h is not a multiple of output_step_s ({step_s:g} s)"
         )
@@ -287,7 +312,10 @@ def load_study(path, check_energy_sources=True):
         except StepSyntaxError as error:
             errors.append(f"steps[{i}] {error}")
             continue
-        key = (tuple(sorted(step.reactants)), tuple(sorted(step.products)), step.ts)
+        left, right = tuple(sorted(step.reactants)), tuple(sorted(step.products))
+        if left == right:
+            errors.append(f"steps[{i}] {step.text}: both sides are the same")
+        key = (frozenset((left, right)), step.ts)  # every step is reversible
         if key in seen:
             errors.append(f"steps[{i}] repeats steps[{seen[key]}] ({step.text})")
         seen.setdefault(key, i)
@@ -376,7 +404,7 @@ def load_study(path, check_energy_sources=True):
 
     # Analyses
     ea = drc = mk = None
-    raw = analyses.get("activation_energy")
+    raw = _analysis(analyses, "activation_energy", errors)
     if raw is not None:
         where = "analyses.activation_energy"
         initial = _concentrations(raw.get("initial_M"), f"{where}.initial_M", errors)
@@ -392,10 +420,11 @@ def load_study(path, check_energy_sources=True):
         sampling = _number(
             raw.get("sampling_time_h"), f"{where}.sampling_time_h", errors
         )
+        _total_on_grid(total, output_step, where, errors)
         if None not in (total, sampling, output_step):
             _on_grid(sampling, output_step, total, f"{where}.sampling_time_h", errors)
         ea = ActivationEnergy(initial, temps or (), total, sampling)
-    raw = analyses.get("degree_of_rate_control")
+    raw = _analysis(analyses, "degree_of_rate_control", errors)
     if raw is not None:
         where = "analyses.degree_of_rate_control"
         if "initial_M" in raw:
@@ -419,7 +448,7 @@ def load_study(path, check_energy_sources=True):
             _number(raw.get("simulation_time_s"), f"{where}.simulation_time_s", errors),
             cores,
         )
-    raw = analyses.get("microkinetics")
+    raw = _analysis(analyses, "microkinetics", errors)
     if raw is not None:
         where = "analyses.microkinetics"
         initial = _concentrations(raw.get("initial_M"), f"{where}.initial_M", errors)
@@ -434,6 +463,7 @@ def load_study(path, check_energy_sources=True):
             errors.append(
                 f"{where}.conversion: must be between 0 and 1, got {conversion}"
             )
+        _total_on_grid(total, output_step, where, errors)
         if None not in (total, snapshot, output_step):
             _on_grid(
                 snapshot, output_step, total, f"{where}.catalyst_snapshot_h", errors
@@ -458,7 +488,8 @@ def load_study(path, check_energy_sources=True):
         ("microkinetics", mk),
     ):
         if analysis is None or (
-            label == "degree_of_rate_control" and "initial_M" not in analyses[label]
+            label == "degree_of_rate_control"
+            and "initial_M" not in (analyses[label] or {})
         ):
             continue
         where = f"analyses.{label}.initial_M"
@@ -471,6 +502,12 @@ def load_study(path, check_energy_sources=True):
                 )
             if name == product:
                 errors.append(f"{where}.{name}: the product always starts at 0")
+        if overall is not None and analysis.initial_M:
+            for name, _ in overall.reactants:
+                if name != studied and name not in analysis.initial_M:
+                    errors.append(
+                        f"{where}: give the overall reactant {name}, or no product can form"
+                    )
         members = {m for ms in cycles.values() for m in ms}
         if cycles and analysis.initial_M and not members & set(analysis.initial_M):
             errors.append(

@@ -118,6 +118,17 @@ def test_edited_study_stops_unless_fresh():
     assert run("run", str(study), "--fresh")[0] == 0
 
 
+def test_t99_has_one_entry_per_concentration():
+    study = copy_example()
+    study.write_text(
+        study.read_text().replace("simulation_time_s: 1000", "simulation_time_s: 90")
+    )
+    assert run("run", str(study))[0] == 0
+    summary = json.loads((study.parent / "results" / "microkinetics.json").read_text())
+    t99 = summary["t99_h"]
+    assert len(t99) == 3 and None in t99 and any(t is not None for t in t99), t99
+
+
 def test_failure_during_the_run_exits_2():
     study = copy_example()
     real = microkatc.run_analyses

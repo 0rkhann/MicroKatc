@@ -47,6 +47,8 @@ TYPED = {
 FAKE_THERMOCHANGE = """#!/bin/bash
 echo "$@" >> "$FAKE_LOG"
 [ "$1" = "-g" ] && shift
+# like the real script, $1 is unquoted, so a path with a space breaks it
+ls $1 > /dev/null 2>&1 || { echo "No valid output file!"; exit 1; }
 echo leftover > temp_summary.temp
 if [ "$FAKE_MODE" = zero ]; then
   printf "%s\\t-1.000000\\t-1.000000\\t0.000000\\n" "$1"
@@ -173,8 +175,9 @@ def test_file_energies_are_converted_and_leave_no_temporary_files():
     expected = f" 300.0 {0.082057366080960 * 300.0}"  # the same strings the old shell pipeline passed
     assert len(calls) == 5 and all(c.endswith(expected) for c in calls), calls
     assert all(
-        " " in c.split(".out")[0] for c in calls
-    )  # a folder name with a space stays one argument
+        c.split()[0] in {f"{n}.out" for n in ("S", "P", "C1", "C2", "TS1")}
+        for c in calls
+    ), calls  # only the file name: the study folder's path has a space
 
 
 def test_grimme_passes_the_g_flag():
