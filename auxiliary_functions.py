@@ -127,12 +127,19 @@ class AuxiliaryFunctions:
             script_path = os.path.join(CURRENT_DIRECTORY, "get_G_compounds.sh")
             print(f"Creating and saving: {reaction_df_file_name}")
             print(f"Creating and saving: {G_compounds_file_name}")
-            subprocess.run(
+            result = subprocess.run(
                 ["bash", script_path, f"{temperature}", f"{pressure}"],
                 capture_output=True,
                 text=True,
                 check=False,
             )
+            # get_G_compounds.sh exits 0 even when thermochange or the Python step fails,
+            # so check for its output file instead of the exit code.
+            if not os.path.exists(G_compounds_file_path):
+                raise RuntimeError(
+                    f"get_G_compounds.sh did not create {G_compounds_file_path}. "
+                    f"Is $thermochange exported?\n{result.stdout}{result.stderr}"
+                )
 
     @staticmethod
     def compute_pressure_value(temperature_value):

@@ -10,8 +10,8 @@ from microkinetics_simulation import MicroKinetics
 
 
 def main():
-    # Load reaction data
     """Runs the apparent Ea, DRC and microkinetics analyses with the parameters set below"""
+    # Load reaction data
     reaction_df = pd.read_csv("reactions.csv", sep=",")
     reactions = AuxiliaryFunctions.reactions_number(reaction_df)
 
@@ -163,8 +163,8 @@ def main():
     # Set the percentage of product conversion
     percentage_of_convertion = 0.99
 
-    # Specify temperature(s) for concentration evolution plot from the temperature values array
-    temperatures = T_values_array_Ea[0]
+    # Temperature of the concentration evolution plot: the simulations above run at temperature_value
+    temperatures = temperature_value
 
     analysis3 = MicroKinetics(
         temperature_value,
