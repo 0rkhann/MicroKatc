@@ -87,6 +87,7 @@ class SimulationHandler:
             )
             + f"_{self.temperature_value}K_{self.pressure_value:.5e}atm"
             + f"_{self.total_simulation_time}s"
+            + f"_{AuxiliaryFunctions.inputs_hash(self.time_step)}"
         )
 
         simulation_file_path = os.path.join(

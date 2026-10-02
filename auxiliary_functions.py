@@ -1,5 +1,7 @@
 """Helper functions shared by the analyses (cycle intermediates, catalyst concentrations, G values, pressure)"""
 
+import hashlib
+import json
 import os
 import re
 import subprocess
@@ -14,6 +16,16 @@ R_L_atm_per_mol_K = 0.082057366080960
 
 class AuxiliaryFunctions:
     """Collection of static helper functions used across the analyses"""
+
+    @staticmethod
+    def inputs_hash(*inputs):
+        """Short stable hash of the inputs, appended to cache file names so any changed input forces a recompute"""
+        dumped = json.dumps(
+            inputs,
+            sort_keys=True,
+            default=lambda o: o.tolist() if hasattr(o, "tolist") else str(o),
+        )
+        return hashlib.md5(dumped.encode()).hexdigest()[:8]
 
     @staticmethod
     def find_intermediates_of_cycle(cycles):
