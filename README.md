@@ -33,14 +33,9 @@ The approach is published in:
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="pics/pipeline-dark.svg"/>
-    <img width="600" alt="MicroKatc pipeline: 1 quantum mechanics (DFT, Gaussian), 2 statistical thermodynamics (thermochange), 3 microkinetics (COPASI), 4 analysis of results" src="pics/pipeline.svg"/>
+    <img width="680" alt="MicroKatc pipeline: 1 quantum mechanics (DFT, Gaussian), 2 statistical thermodynamics (thermochange), 3 microkinetics (COPASI), 4 analysis of results" src="pics/pipeline.svg"/>
   </picture>
 </p>
-
-1. **Quantum mechanics:** DFT calculations of every species and transition state (Gaussian `.out` files).
-2. **Thermochemistry:** thermochange corrects each Gibbs energy to the working temperature and a 1 M standard state; MicroKatc turns them into forward and reverse barriers for every step in `reactions.csv`.
-3. **Microkinetics:** copasi_helper builds a COPASI model, and MicroKatc runs time-course simulations over temperature and reactant concentration.
-4. **Analysis:** apparent activation energies, degree of rate control, catalyst distribution and conversion times.
 
 | Module | Role |
 | --- | --- |
