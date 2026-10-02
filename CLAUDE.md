@@ -10,7 +10,7 @@ for an ICIQ summer research project and later used in:
 ## Pipeline
 
 1. `microkatc.py run <study.yaml>` reads and checks the study (`study.py`, `steps.py`,
-   `study_yaml.py`; format in `docs/USAGE.md` and `docs/superpowers/specs/2026-10-02-yaml-study-input-design.md`).
+   `study_yaml.py`; format in `docs/USAGE.md`).
 2. `thermochemistry.py` gets G per species from thermochange (`$thermochange` env var) or typed
    values, and writes the barrier tables in `<study folder>/results/`.
 3. The analyses run there: COPASI simulations through `copasi_helper` (`microkinetics_simulation.py`),
