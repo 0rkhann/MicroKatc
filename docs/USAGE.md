@@ -127,7 +127,7 @@ All parameters are set, and commented, at the top of `main()` in [`main.py`](../
 python main.py
 ```
 
-The example takes about 3–4 minutes on 16 cores and about 10 minutes on a 4-core laptop. Most of that time is the DRC: it simulates the whole network twice per step and per concentration.
+The example takes about 3.5 minutes on a workstation and about 7 minutes on a 4-core machine (GitHub's CI runner). Most of that time is the DRC: it simulates the whole network twice per step and per concentration.
 
 To rebuild the README-style summary figures after a run:
 
