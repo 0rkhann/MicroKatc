@@ -24,10 +24,10 @@ def test_flux_sign_handling():
 
     T = [300.0, 310.0, 320.0]
     fluxes = {
-        "fwd.Flux": [1e-3, 2e-3, 4e-3],
-        "rev.Flux": [-1e-3, -2e-3, -4e-3],
-        "flip.Flux": [1e-3, -2e-3, 4e-3],
-        "zero.Flux": [1e-3, 0.0, 4e-3],
+        "r01.Flux": [1e-3, 2e-3, 4e-3],
+        "r02.Flux": [-1e-3, -2e-3, -4e-3],
+        "r03.Flux": [1e-3, -2e-3, 4e-3],
+        "r04.Flux": [1e-3, 0.0, 4e-3],
     }
     rows = []
     for i, t in enumerate(T):
@@ -38,9 +38,9 @@ def test_flux_sign_handling():
     df = pd.DataFrame(rows)
 
     out = ReactionParameterCalculator.calculate_reaction_parameters(
-        df, T, [0.1], "X", "ri", reactions=list(fluxes)
+        df, T, [0.1], "X", "ri", reactions=["fwd", "rev", "flip", "zero"]
     )
-    assert list(out["name"]) == ["fwd.Flux", "rev.Flux"]  # flip and zero skipped
+    assert list(out["name"]) == ["r01.Flux", "r02.Flux"]  # flip and zero skipped
     fwd, rev = out.iloc[0], out.iloc[1]
     assert (fwd["sign"], rev["sign"]) == (1, -1)
     assert np.isclose(fwd["Ea"], rev["Ea"]) and np.isclose(fwd["slope"], rev["slope"])
