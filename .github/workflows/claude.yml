@@ -108,7 +108,7 @@ jobs:
           # limited to the project's checks and read-only git: no `gh`, no `pip`, and
           # no `git -c ...`, which could run arbitrary shell.
           claude_args: >-
-            --max-turns 80
+            --max-turns 200
             --mcp-config ${{ runner.temp }}/claude-mcp.json
             --allowedTools "Bash(python -m py_compile:*),Bash(python3 -m py_compile:*),Bash(ruff check:*),Bash(ruff format:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git mv:*),mcp__context7,mcp__exa,mcp__brave-search,mcp__tavily"
 
