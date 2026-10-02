@@ -65,7 +65,7 @@ The example data in this repository model the hydroformylation of ethene by a ho
 ### 1. ln(r<sub>i</sub>) vs. 1/T
 
 <p align="center">
-  <img width="1600" alt="ln(ri) vs 1/T" src="pics/ln(ri)_1_T_PMe3_1.000000e-05_T_range_325.0K_375.0K.svg"/>
+  <img width="1600" alt="ln(ri) vs 1/T" src="pics/ln_ri_vs_1_over_T.svg"/>
 </p>
 
 Arrhenius plots for each step at a fixed PMe<sub>3</sub> concentration. They check that every step is linear in 1/T and that the low-catalyst-concentration assumption holds. By default, only steps with R<sup>2</sup> > 0.9 are shown.
@@ -97,26 +97,26 @@ I8_0L ⇌ I9_0L is rate-determining in the 0L cycle, but it loses importance as 
 ### 5. Catalyst distribution between cycles
 
 <p align="center">
-  <img width="700" alt="Catalyst concentration vs c0" src="pics/C(catalyst)_C(PMe3)_350.0K_2.91006e%2B03atm.svg"/>
+  <img width="700" alt="Catalyst concentration vs c0" src="pics/catalyst_distribution_350K.svg"/>
 </p>
 
-The catalyst concentration in each cycle, at a chosen time, as PMe<sub>3</sub> increases. Beyond a threshold concentration, the 1L cycle holds more catalyst than the 0L cycle.
+The catalyst concentration in each cycle at t = 1 h, as PMe<sub>3</sub> increases. Beyond about 5 × 10<sup>-4</sup> M, the 1L cycle holds more catalyst than the 0L cycle.
 
 ### 6. Concentration profiles over time
 
 <p align="center">
-  <img width="1000" alt="Concentration evolution" src="pics/C(compounds)_C(PMe3)_350.0K_2.91006e%2B03atm.svg"/>
+  <img width="1000" alt="Concentration evolution" src="pics/concentration_evolution_350K.svg"/>
 </p>
 
-The time evolution of selected species at each PMe<sub>3</sub> concentration. The product (red line) reaches its maximum sooner as more PMe<sub>3</sub> is added, because the 1L cycle produces it more efficiently.
+The time evolution of the resting states I1 and I7 of both cycles at each PMe<sub>3</sub> concentration. As PMe<sub>3</sub> increases, the catalyst moves from the 0L species into their 1L counterparts.
 
 ### 7. Time to 99 % conversion
 
 <p align="center">
-  <img width="700" alt="Conversion time vs c0" src="pics/C(PMe3)_total_t_product_conversion_350.0K_2.91006e%2B03atm.svg"/>
+  <img width="700" alt="Conversion time vs c0" src="pics/conversion_time_350K.svg"/>
 </p>
 
-The time for the product to reach 99 % of the maximum allowed by the limiting reactant (the threshold is adjustable). It drops sharply as PMe<sub>3</sub> increases.
+The time for the product to reach 99 % of the maximum allowed by the limiting reactant (the threshold is adjustable). It drops from 5.7 h with the 0L cycle alone to 1.7 h once the 1L cycle takes over.
 
 ### Putting it together
 
@@ -132,11 +132,24 @@ These panels are not produced by `main.py`, but a few extra lines of code genera
 
 This explains why the E<sub>a</sub> of the 1L rate-determining step increases even though the 1L cycle becomes more active. As entering the 1L cycle gets easier, its own poisoning intermediates build up, which makes product formation in that cycle harder.
 
+## Reproducing the paper
+
+With the settings in `main.py`, a full run takes a few minutes and reproduces the published results:
+
+| Published result | Paper | This code |
+| --- | --- | --- |
+| Gibbs barriers of all 22 steps at 5 temperatures (SI Tables S1–S5) | 0.1 kcal mol<sup>-1</sup> precision | identical |
+| Time to 99 % conversion, 0L only → 1L (Figure 4) | 5.66 h → 1.69 h | 5.67 h → 1.69 h |
+| Apparent E<sub>a</sub> of product formation (Figure 6) | 23.5 → 21.4 → 22.1 kcal mol<sup>-1</sup> | 23.5 → 21.5 → 22.1 kcal mol<sup>-1</sup> |
+| Minimum DRC of I3_0L ⇌ I4_0L (Figure 5) | −0.22 at 3 × 10<sup>-4</sup> M | −0.23 at 3 × 10<sup>-4</sup> M |
+
+[`tests/test_paper_barriers.py`](tests/test_paper_barriers.py) checks the barriers against SI Table S3 on every run with thermochange installed.
+
 ## Quick start
 
 ### 1. Install dependencies
 
-MicroKatc relies on two packages by D. Garay-Ruiz, and on COPASI:
+MicroKatc relies on two packages by D. Garay-Ruiz:
 
 ```bash
 git clone https://gitlab.com/dgarayr/thermochange.git    # thermochemical corrections
@@ -144,15 +157,13 @@ git clone https://gitlab.com/dgarayr/copasi_helper.git   # COPASI model building
 git clone https://github.com/0rkhann/MicroKatc.git
 ```
 
-Also install the [COPASI](https://copasi.org/) software. Then, inside a virtual environment, install the Python requirements:
+Then, inside a Python 3.10 virtual environment, install the Python requirements. They include the COPASI Python bindings (`python-copasi`) and the pinned copasi_helper commit:
 
 ```bash
 cd MicroKatc
-python3 -m venv .venv && source .venv/bin/activate
+python3.10 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
-
-A virtual environment is recommended, because some dependencies need older versions of numpy and pandas.
 
 ### 2. Prepare inputs
 
