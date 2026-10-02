@@ -334,6 +334,11 @@ def load_study(path, check_energy_sources=True):
     if "temperature_K" not in conditions:
         errors.append("conditions.temperature_K: required")
     studied = conditions.get("studied_species")
+    if studied is not None and not isinstance(studied, str):
+        errors.append(
+            f"conditions.studied_species: must be one species name, got {studied!r}"
+        )
+        studied = ""
     if studied is None:
         errors.append("conditions.studied_species: required")
     elif names and studied not in names:
@@ -356,6 +361,13 @@ def load_study(path, check_energy_sources=True):
 
     # Species block
     product = species_block.get("product")
+    if product is not None and not isinstance(product, str):
+        errors.append(f"species.product: must be one species name, got {product!r}")
+        product = None
+    if product is not None and product == studied:
+        errors.append(
+            f"conditions.studied_species: {product} is the product, which always starts at 0"
+        )
     if product is not None and names and product not in names:
         errors.append(f"species.product: {product} does not appear in any step")
     overall = None
@@ -555,6 +567,11 @@ def load_study(path, check_energy_sources=True):
             if name not in energies:
                 errors.append(
                     f"no energy for {name}: add it to species.energies_kcal_mol"
+                )
+        for name in energies:
+            if everything and name not in everything:
+                warnings.append(
+                    f"warning: species.energies_kcal_mol.{name} is not used by any step"
                 )
 
     # Warnings

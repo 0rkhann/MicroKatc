@@ -144,6 +144,14 @@ def test_failure_during_the_run_exits_2():
     assert code == 2 and "run failed: COPASI exploded" in err, err
 
 
+def test_check_shows_typed_energy_warnings():
+    study = copy_example()
+    study.write_text(study.read_text().replace("TS1: 15.0", "TS1: -5.0"))
+    code, out, _ = run("check", str(study))
+    assert code == 0 and "has a negative forward barrier (-3.0 kcal/mol)" in out, out
+    assert "Overall reaction S <=> P: ΔG = -10.0 kcal/mol at 300.0 K" in out, out
+
+
 if __name__ == "__main__":
     for name, test in list(globals().items()):
         if name.startswith("test_"):

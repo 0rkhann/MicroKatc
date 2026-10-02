@@ -67,6 +67,15 @@ def test_top_level_must_be_a_mapping():
         raise AssertionError("expected StudyError")
 
 
+def test_missing_file_is_a_study_error():
+    try:
+        load_yaml(os.path.join(tempfile.mkdtemp(), "nope.yaml"))
+    except StudyError as error:
+        assert "nope.yaml: cannot read the file" in str(error), str(error)
+    else:
+        raise AssertionError("expected StudyError")
+
+
 if __name__ == "__main__":
     for name, test in list(globals().items()):
         if name.startswith("test_"):

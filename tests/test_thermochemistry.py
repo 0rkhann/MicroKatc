@@ -205,6 +205,20 @@ def test_zero_energy_from_thermochange_stops_the_run():
     )
 
 
+def test_rerun_reports_the_same_messages():
+    doc = {
+        **TYPED,
+        "species": {
+            **TYPED["species"],
+            "energies_kcal_mol": {**TYPED["species"]["energies_kcal_mol"], "TS1": -5.0},
+        },
+    }
+    study = study_from(doc)
+    in_new_folder()
+    first = write_barrier_tables(study)
+    assert write_barrier_tables(study) == first and len(first) == 2, first
+
+
 if __name__ == "__main__":
     for name, test in list(globals().items()):
         if name.startswith("test_"):

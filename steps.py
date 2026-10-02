@@ -78,7 +78,7 @@ def parse_step(text, allow_ts=True):
     if re.search(r"\svia(\s|$)", whole):
         if not allow_ts:
             raise StepSyntaxError(f'"{whole}": via is not allowed here')
-        body, _, after = whole.partition(" via")
+        body, after = re.split(r"\svia(?:\s|$)", whole, maxsplit=1)
         names = after.split()
         if len(names) != 1:
             raise StepSyntaxError(

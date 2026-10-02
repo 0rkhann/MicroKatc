@@ -46,6 +46,16 @@ def test_flux_sign_handling():
     assert np.isclose(fwd["Ea"], rev["Ea"]) and np.isclose(fwd["slope"], rev["slope"])
     assert np.isfinite(fwd["R2"])
 
+    nothing = df[df["name"].isin(["r03.Flux", "r04.Flux"])]
+    try:
+        ReactionParameterCalculator.calculate_reaction_parameters(
+            nothing, T, [0.1], "X", "ri", reactions=["flip", "zero"]
+        )
+    except ValueError as error:
+        assert "no Ea could be fitted" in str(error), str(error)
+    else:
+        raise AssertionError("expected ValueError when every fit is skipped")
+
     flat = np.array([1.0, 1.0, 1.0])
     assert np.isnan(PlotFunctions.calculate_R2_values(np.array(T), flat, 0.0, 1.0))
 

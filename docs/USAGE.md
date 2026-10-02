@@ -145,7 +145,7 @@ python microkatc.py run my_study/study.yaml       # runs every requested analysi
 python microkatc.py run my_study/study.yaml --fresh   # deletes my_study/results first
 ```
 
-`check` reports every problem at once, each with its location in the file. `run` does the same checks first.
+`check` reports every problem at once, each with its location in the file. With typed energies it also prints the barrier warnings and the overall ΔG. `run` does the same checks first.
 
 | Exit code | Meaning |
 | --- | --- |
@@ -187,7 +187,7 @@ Problems in the study file are reported before anything runs. Examples:
 | `analyses.activation_energy.sampling_time_h: 3 h is after the end of the simulation (10000 s = 2.8 h)` | Sample earlier or simulate longer. |
 | `$thermochange is not set: export thermochange=/path/to/thermochange` | Export the variable. |
 
-Warnings do not stop the run: species in no cycle (not counted in the catalyst distribution), negative barriers, and the overall ΔG from your energies (−25.9 kcal mol<sup>-1</sup> for the example, the paper's value), printed as a check.
+Warnings do not stop the run: species in no cycle (not counted in the catalyst distribution), typed energies that no step uses, negative barriers, and the overall ΔG from your energies (−25.9 kcal mol<sup>-1</sup> for the example, the paper's value), printed as a check.
 
 During a run:
 
@@ -197,6 +197,7 @@ During a run:
 | `... couldn't converge to a solution. Resimulating...` | COPASI stopped early; MicroKatc retries up to 5 times. |
 | `ConvergenceError: Solution can't be found for ...` | All retries failed: shorten the simulation or use less extreme concentrations. |
 | `C(...) = ...M couldn't reach the threshold ...` | The product never reached the conversion threshold in the simulated time; that point is left out of the conversion-time figure. Simulate longer. |
+| `no Ea could be fitted from the fluxes: ...` | Every fit was skipped, usually because the system is at equilibrium at `sampling_time_h`. Sample earlier. |
 | `Skipping Ea fit of ...: sign changes across the temperature range` | That step's net flux changes direction between temperatures, so it has no meaningful Arrhenius slope. Expected for near-equilibrium steps. |
 
 Run the test suite with `for t in tests/test_*.py; do python "$t"; done`. `tests/test_paper_barriers.py` needs `$thermochange` and is skipped without it.

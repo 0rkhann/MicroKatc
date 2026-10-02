@@ -243,6 +243,13 @@ def main(argv=None):
     for warning in study.warnings:
         print(warning)
     if args.command == "check":
+        if study.files is None:  # typed energies: the barriers cost nothing to check
+            from thermochemistry import barrier_messages, barrier_table, gibbs_energies
+
+            gibbs = gibbs_energies(study, study.temperature_K)
+            table = barrier_table(study, gibbs)
+            for message in barrier_messages(study, gibbs, table, study.temperature_K):
+                print(message)
         print(
             f"{args.study}: OK ({len(study.steps)} steps, {len(study.species())} species)"
         )
