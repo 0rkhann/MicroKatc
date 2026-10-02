@@ -7,7 +7,7 @@ import copasi_parser as cpx
 
 from auxiliary_functions import AuxiliaryFunctions
 from calculating_G_for_microkinetics import REACTION_DF_OUTPUT_DIR_NAME
-from file_operations import CURRENT_DIRECTORY, FileOperations
+from file_operations import FileOperations, run_directory
 from plotting_functions import PlotFunctions
 
 CONVERT_SECONDS_TO_HOURS = 1 / 3600
@@ -24,7 +24,7 @@ class SimulationHandler:
         self.total_simulation_time = total_simulation_time
         self.time_step = time_step
         self.datafile = os.path.join(
-            CURRENT_DIRECTORY,
+            run_directory(),
             REACTION_DF_OUTPUT_DIR_NAME,
             f"reaction_df_{self.temperature_value}K_{self.pressure_value:.5e}atm.csv",
         )
@@ -91,7 +91,7 @@ class SimulationHandler:
         )
 
         simulation_file_path = os.path.join(
-            CURRENT_DIRECTORY, SIMULATIONS_OUTPUT_DIR_NAME, simulation_filename
+            run_directory(), SIMULATIONS_OUTPUT_DIR_NAME, simulation_filename
         )
 
         if os.path.exists(simulation_file_path):
@@ -124,12 +124,15 @@ class MicroKinetics:
         reactant_to_study,
         c0,
         cycles,
-        main_reactants,
+        max_product_M,
         compounds_to_plot,
         catalyst_concentration_time,
         percentage_of_convertion,
         time_step,
+        product="prod",
     ):
+        """cycles: {label: [intermediates]}; max_product_M: the largest product concentration the
+        overall reaction allows, one value per studied concentration (study.Study.max_product_M)"""
 
         self.temperature_value = temperature_value
         self.pressure_value = AuxiliaryFunctions.compute_pressure_value(
@@ -139,7 +142,8 @@ class MicroKinetics:
         self.total_simulation_time = total_simulation_time
         self.c0 = c0
         self.cycles = cycles
-        self.main_reactants = main_reactants
+        self.max_product_M = list(max_product_M)
+        self.product = product
         self.compounds_to_plot = compounds_to_plot
         self.reactant_concentration_array = reactant_concentration_array
         self.catalyst_concentration_time = catalyst_concentration_time
@@ -197,21 +201,18 @@ class MicroKinetics:
     def plot_catalyst_concentration_vs_reactant(self, log_x, figsize):
         """Plots and saves catalyst concentration in each cycle vs. initial concentration of the studied reactant"""
         fig_name = f"C(catalyst)_C({self.reactant_to_study})_{self.temperature_value}K_{self.pressure_value:.5e}atm.svg"
-        cycles_intermediates_dict = AuxiliaryFunctions.find_intermediates_of_cycle(
-            self.cycles
-        )
         catalyst_concentrations_per_cycle = (
             AuxiliaryFunctions.get_concentrations_of_catalyst(
                 self.simulations_dfs,
                 self.catalyst_concentration_time,
-                cycles_intermediates_dict,
+                self.cycles,
             )
         )
 
         self.plot_functions.plot_concentration_of_catalyst_versus_studied_reactant(
             self.reactant_concentration_array,
             catalyst_concentrations_per_cycle,
-            self.cycles,
+            list(self.cycles),
             self.reactant_to_study,
             figsize,
             fig_name,
@@ -222,18 +223,13 @@ class MicroKinetics:
     def plot_reactant_vs_product_conversion(self, log_x, figsize):
         """Plots and saves the time to reach the product conversion threshold vs. initial concentration of the studied reactant"""
         fig_name = f"C({self.reactant_to_study})_total_t_product_conversion_{self.temperature_value}K_{self.pressure_value:.5e}atm.svg"
-        product_conversion_threshold_concentration = (
-            AuxiliaryFunctions.find_limiting_reactant_concentration(
-                self.c0, self.main_reactants
-            )
-            * self.percentage_of_convertion
-        )
-
+        thresholds = [m * self.percentage_of_convertion for m in self.max_product_M]
         times_conv_reac_conc = AuxiliaryFunctions.compute_time_of_product_conversion_given_reactant_concentration(
             self.simulations_dfs,
             self.reactant_concentration_array,
             self.reactant_to_study,
-            product_conversion_threshold_concentration,
+            thresholds,
+            self.product,
         )
 
         self.plot_functions.plot_reactant_concentration_vs_product_conversion(

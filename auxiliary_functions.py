@@ -1,15 +1,7 @@
-"""Helper functions shared by the analyses (cycle intermediates, catalyst concentrations, G values, pressure)"""
+"""Helper functions shared by the analyses (cache names, catalyst concentrations, conversion times, pressure)"""
 
 import hashlib
 import json
-import os
-import re
-import subprocess
-
-import pandas as pd
-
-from calculating_G_for_microkinetics import G_COMPOUNDS_OUTPUT_DIR_NAME
-from file_operations import CURRENT_DIRECTORY
 
 R_L_atm_per_mol_K = 0.082057366080960
 
@@ -26,34 +18,6 @@ class AuxiliaryFunctions:
             default=lambda o: o.tolist() if hasattr(o, "tolist") else str(o),
         )
         return hashlib.md5(dumped.encode()).hexdigest()[:8]
-
-    @staticmethod
-    def find_intermediates_of_cycle(cycles):
-        """Returns intermediates belonging to a corresponding cycle as a dictionary"""
-        compounds = pd.read_csv("compounds.csv")["Compounds"].to_list()
-        cycles_intermediates_dict = {}
-
-        for cycle in cycles:
-            # Regex pattern for intermediates (I1_0L, I5_1L, I2c_1L, I9t_1L...)
-            pattern = re.compile(rf"I\d+[a-z]*_{cycle}")
-
-            # Find intermediates matching the pattern for the current cycle
-            intermediates = [
-                intermediate
-                for intermediate in compounds
-                if pattern.fullmatch(intermediate)
-            ]
-            cycles_intermediates_dict[cycle] = intermediates
-
-        return cycles_intermediates_dict
-
-    @staticmethod
-    def find_limiting_reactant_concentration(initial_concentrations, reactants):
-        """Returns concentration of a limiting reactant in a system"""
-        min_initial_reactant_concentrations = min(
-            [initial_concentrations[reactant] for reactant in reactants]
-        )
-        return min_initial_reactant_concentrations
 
     @staticmethod
     def get_concentration_for_cycle(simulations_dfs, time, intermediates):
@@ -89,17 +53,19 @@ class AuxiliaryFunctions:
         simulation_dfs,
         reactant_concentration_array,
         reactant_to_study,
-        product_conversion_threshold_concentration,
+        thresholds,
+        product="prod",
     ):
-        """Returns the first times when concentration of a product is greater than a product concentration threshold"""
+        """First time each simulation's product concentration exceeds its threshold (one per simulation)"""
         times_conv_reac_conc = []
 
         for i, simulation_df in enumerate(simulation_dfs):
             try:
                 # Find the first time value when concentration of a product is greater than a set product concentration threshold
-                filtered_df = simulation_df.query(
-                    "prod > @product_conversion_threshold_concentration"
-                )
+                product_conversion_threshold_concentration = thresholds[i]
+                filtered_df = simulation_df[
+                    simulation_df[product] > product_conversion_threshold_concentration
+                ]
 
                 # First time at when product reach the product conversion threshold concentration
                 first_convergence_time = filtered_df.iloc[0]["time"]
@@ -116,42 +82,6 @@ class AuxiliaryFunctions:
                 continue
 
         return times_conv_reac_conc
-
-    @staticmethod
-    def reactions_number(reaction_df):
-        """Returns the reactions of the "Rx" column as a list"""
-        reactions = reaction_df["Rx"].to_list()
-        return reactions
-
-    @staticmethod
-    def calculate_G_values(temperature, pressure):
-        """Calculates G of compounds and reactions in a system at specified T and P"""
-        reaction_df_file_name = f"reaction_df_{temperature}K_{pressure:.5e}atm.csv"
-        G_compounds_file_name = f"G_values_at_{temperature}K_{pressure:.5e}atm.csv"
-
-        G_compounds_file_path = os.path.join(
-            CURRENT_DIRECTORY, G_COMPOUNDS_OUTPUT_DIR_NAME, G_compounds_file_name
-        )
-
-        # Calculations will be executed if the file with specified T and P doesn't in a dedicated directory
-        if not os.path.exists(G_compounds_file_path):
-            # Path to the Bash script
-            script_path = os.path.join(CURRENT_DIRECTORY, "get_G_compounds.sh")
-            print(f"Creating and saving: {reaction_df_file_name}")
-            print(f"Creating and saving: {G_compounds_file_name}")
-            result = subprocess.run(
-                ["bash", script_path, f"{temperature}", f"{pressure}"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            # get_G_compounds.sh exits 0 even when thermochange or the Python step fails,
-            # so check for its output file instead of the exit code.
-            if not os.path.exists(G_compounds_file_path):
-                raise RuntimeError(
-                    f"get_G_compounds.sh did not create {G_compounds_file_path}. "
-                    f"Is $thermochange exported?\n{result.stdout}{result.stderr}"
-                )
 
     @staticmethod
     def compute_pressure_value(temperature_value):
