@@ -31,7 +31,10 @@ The approach is published in:
 ## How it works
 
 <p align="center">
-  <img width="480" alt="MicroKatc pipeline: 1 quantum mechanics, 2 statistical thermodynamics and thermochemical correction, 3 microkinetics with COPASI, 4 analysis of results" src="pics/pipeline.png"/>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="pics/pipeline-dark.svg"/>
+    <img width="600" alt="MicroKatc pipeline: 1 quantum mechanics (DFT, Gaussian), 2 statistical thermodynamics (thermochange), 3 microkinetics (COPASI), 4 analysis of results" src="pics/pipeline.svg"/>
+  </picture>
 </p>
 
 1. **Quantum mechanics:** DFT calculations of every species and transition state (Gaussian `.out` files).
