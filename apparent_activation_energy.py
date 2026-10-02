@@ -98,7 +98,8 @@ class ReactionDataHandler:
         collected_data = []
         for key in keys:
             value = simulation_df.loc[simulation_df["time"] == time, key].item()
-            log_value = np.log(abs(value))
+            with np.errstate(divide="ignore"):  # zero value -> -inf, skipped later
+                log_value = np.log(abs(value))
 
             data_entry = {
                 "name": key,
@@ -106,6 +107,7 @@ class ReactionDataHandler:
                 "T": T_value,
                 "1/T": 1 / T_value,
                 "ln_value": log_value,
+                "sign": int(np.sign(value)),
             }
             collected_data.append(data_entry)
 
@@ -145,6 +147,18 @@ class ReactionParameterCalculator:
                 ]
 
                 if not filtered_df.empty:
+                    signs = set(filtered_df["sign"])
+                    if 0 in signs or len(signs) > 1:
+                        why = (
+                            "zero value at some temperature"
+                            if 0 in signs
+                            else "sign changes across the temperature range"
+                        )
+                        print(
+                            f"Skipping Ea fit of {key} at c0({reactant_to_study}) = {reactant_c0}: {why}"
+                        )
+                        continue
+
                     x_values = filtered_df["1/T"].values
                     y_values = filtered_df["ln_value"].values
 
@@ -153,7 +167,7 @@ class ReactionParameterCalculator:
                     y_pred = slope * x_values + intercept
                     ss_res = np.sum((y_values - y_pred) ** 2)
                     ss_tot = np.sum((y_values - np.mean(y_values)) ** 2)
-                    r2 = 1 - (ss_res / ss_tot)
+                    r2 = 1 - (ss_res / ss_tot) if ss_tot != 0 else np.nan
 
                     Ea = -slope * R / J_TO_KCAL
 
@@ -162,6 +176,7 @@ class ReactionParameterCalculator:
                             "name": key,
                             f"c0({reactant_to_study})": reactant_c0,
                             "R2": r2,
+                            "sign": signs.pop(),
                             "Ea": Ea,
                             "slope": slope,
                             "intercept": intercept,

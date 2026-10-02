@@ -204,6 +204,8 @@ class PlotFunctions:
 
         ss_tot = np.sum((y_values - np.mean(y_values)) ** 2)
         ss_res = np.sum((y_values - y_pred) ** 2)
+        if ss_tot == 0:  # all y equal: R2 is undefined
+            return np.nan
         r2 = 1 - (ss_res / ss_tot)
         return r2
 
